@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
-import { golos, unbounded } from "./fonts";
+import { golos, mursGothic } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru" className={`${golos.variable} ${unbounded.variable} h-full antialiased`}>
+    <html lang="ru" className={`${golos.variable} ${mursGothic.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
         {children}

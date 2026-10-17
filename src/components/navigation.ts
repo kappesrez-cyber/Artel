@@ -12,7 +12,6 @@ export const routes = {
   search: "/search",
   searchByPhoto: "/search/photo",
   searchByVoice: "/search/voice",
-  newRequest: "/request/new",
 } as const;
 
 export const mainNav = [

@@ -17,7 +17,7 @@
   --font-sans:
     var(--font-golos), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial,
     sans-serif;
-  --font-display: var(--font-unbounded), var(--font-golos), sans-serif;
+  --font-display: var(--font-murs-gothic), var(--font-golos), sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 

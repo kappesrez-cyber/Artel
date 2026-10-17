@@ -6,9 +6,7 @@ import { routes } from "./navigation";
 export function PlaceholderPage({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center gap-6 px-6 py-16 text-center">
-      <h1 className="font-display text-brand-dark text-4xl leading-tight font-black md:text-5xl">
-        {title}
-      </h1>
+      <h1 className="font-display text-brand-dark text-4xl leading-tight md:text-5xl">{title}</h1>
       {children}
       <p className="text-lg text-black/50">Раздел в разработке.</p>
       <Link

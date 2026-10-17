@@ -1,12 +1,16 @@
 import Form from "next/form";
 import Link from "next/link";
-import { ArrowUpIcon, CameraIcon, MicIcon, PlusCircleIcon } from "./icons";
+import { AttachFileButton } from "./AttachFileButton";
+import { ArrowUpIcon, CameraIcon, MicIcon } from "./icons";
 import { routes } from "./navigation";
 
 const iconButton =
   "shrink-0 rounded-full transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
-/** Строка поиска главной страницы. Отправка ведёт на /search?q=…, иконки — на свои страницы. */
+/**
+ * Строка поиска главной страницы. Отправка ведёт на /search?q=…, «+» прикрепляет файл,
+ * остальные иконки — на свои страницы.
+ */
 export function SearchBar() {
   return (
     <Form
@@ -14,9 +18,7 @@ export function SearchBar() {
       role="search"
       className="bg-brand-gray flex h-[calc(var(--u)*140)] w-full max-w-[calc(var(--u)*1300)] items-center rounded-[calc(var(--u)*73)] pr-[calc(var(--u)*41)] pl-[calc(var(--u)*20)]"
     >
-      <Link href={routes.newRequest} aria-label="Новая заявка" className={iconButton}>
-        <PlusCircleIcon className="size-[calc(var(--u)*90)]" />
-      </Link>
+      <AttachFileButton />
 
       <input
         type="search"

@@ -1,4 +1,5 @@
-import { Golos_Text, Unbounded } from "next/font/google";
+import { Golos_Text } from "next/font/google";
+import localFont from "next/font/local";
 
 /** Основной шрифт интерфейса (меню, строка поиска). */
 export const golos = Golos_Text({
@@ -7,12 +8,9 @@ export const golos = Golos_Text({
   variable: "--font-golos",
 });
 
-/**
- * Заголовки. В макете используется Murs Gothic Wide Dark, которого нет в Google Fonts;
- * Unbounded Black — ближайшая широкая гротескная замена с кириллицей.
- */
-export const unbounded = Unbounded({
-  subsets: ["latin", "cyrillic"],
-  weight: "900",
-  variable: "--font-unbounded",
+/** Заголовки: Murs Gothic Wide Dark (Maksym Kobuzan), как в макете. */
+export const mursGothic = localFont({
+  src: "./fonts/MursGothic-WideDark.ttf",
+  variable: "--font-murs-gothic",
+  display: "swap",
 });
