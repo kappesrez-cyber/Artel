@@ -12,12 +12,16 @@ export const routes = {
   search: "/search",
   searchByPhoto: "/search/photo",
   searchByVoice: "/search/voice",
+  newOrder: "/orders/new",
 } as const;
 
-export const mainNav = [
-  { href: routes.sellers, label: "Продавцам" },
-  { href: routes.buyers, label: "Покупателям" },
-  { href: routes.pricing, label: "Тарифы" },
-] as const;
+/** Страница позиции каталога. */
+export const productHref = (id: string) => `/products/${encodeURIComponent(id)}`;
 
-export const secondaryNav = [{ href: routes.about, label: "О нас" }] as const;
+// «Продавцам» убрано из меню по макету: у продавца будет свой режим, страница /sellers остаётся.
+export const mainNav = [{ href: routes.buyers, label: "Покупателям" }] as const;
+
+export const secondaryNav = [
+  { href: routes.pricing, label: "Тарифы" },
+  { href: routes.about, label: "О нас" },
+] as const;

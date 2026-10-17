@@ -1,4 +1,4 @@
-// Иконки строки поиска, экспортированы из макета в Figma.
+// Иконки из макета в Figma: строка поиска и карточки результатов.
 type IconProps = { className?: string };
 
 export function PlusCircleIcon({ className }: IconProps) {
@@ -59,6 +59,26 @@ export function ArrowUpIcon({ className }: IconProps) {
         d="M14.7279 30.5H16.7279V2H14.7279H12.7279L12.7279 30.5H14.7279ZM16.1421 0.585787C15.3611 -0.195263 14.0947 -0.195263 13.3137 0.585787L0.58577 13.3137C-0.195279 14.0948 -0.195279 15.3611 0.58577 16.1421C1.36682 16.9232 2.63315 16.9232 3.4142 16.1421L14.7279 4.82843L26.0416 16.1421C26.8227 16.9232 28.089 16.9232 28.87 16.1421C29.6511 15.3611 29.6511 14.0948 28.87 13.3137L16.1421 0.585787Z"
         fill="white"
       />
+    </svg>
+  );
+}
+
+/** «Arrow left-circle» из карточки результата поиска. */
+export function ArrowLeftCircleIcon({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 8 8 12 12 16" />
+      <line x1="16" y1="12" x2="8" y2="12" />
     </svg>
   );
 }

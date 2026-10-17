@@ -15,3 +15,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Server-only code lives in `src/server/` and imports `server-only`. Read env through `env()` from `src/server/env.ts`.
 - Schema changes: edit `prisma/schema.prisma`, then `npm run db:migrate -- --name <name>` and commit the migration.
 - User-facing text is in Russian.
+- Catalog reads/writes go through `src/server/catalog` (keeps `searchText` and ownership checks in one place); seller API routes call `checkSellerAccess` until real auth exists.

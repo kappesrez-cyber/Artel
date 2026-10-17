@@ -1,6 +1,5 @@
 // Схема базы данных ПромПул.
-// Модели предметной области (пользователи, компании, запросы, каталог и т.д.)
-// будут добавляться отдельными миграциями: `npm run db:migrate -- --name <имя>`.
+// После правки: `npm run db:migrate -- --name <имя>` и закоммитить миграцию.
 
 generator client {
   provider = "prisma-client"
@@ -9,4 +8,56 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+/// Организация на платформе. Пока только производители (продавцы), позже — и заказчики.
+/// Позиции каталога принадлежат организации; когда появится авторизация,
+/// пользователь получит доступ к позициям через членство в организации.
+model Organization {
+  id        String    @id @default(cuid())
+  /// Название, как его видит покупатель: «ООО Обнал».
+  name      String
+  /// ИНН, когда организация пройдёт верификацию.
+  inn       String?   @unique
+  /// Город регистрации. У каждой позиции свой город производства.
+  city      String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+/// Видимость позиции. В поиске показываются только опубликованные.
+enum ProductStatus {
+  /// Черновик: производитель ещё заполняет карточку.
+  DRAFT
+  /// Опубликована и находится поиском.
+  PUBLISHED
+  /// Снята с продажи, история сохраняется.
+  ARCHIVED
+}
+
+/// Позиция каталога производителя: деталь, узел, ингредиент.
+/// Заполняется производителем в режиме продавца (через API `/api/organizations/{id}/products`).
+model Product {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  /// Цена за единицу в рублях, с копейками.
+  price          Decimal       @db.Decimal(14, 2)
+  /// Срок производства в календарных днях. Хранится длительностью, а не датой:
+  /// покупатель видит дату готовности, отсчитанную от дня просмотра.
+  leadTimeDays   Int
+  /// Город, где производится или откуда отгружается позиция.
+  city           String
+  status         ProductStatus @default(DRAFT)
+  /// Нормализованный текст для поиска (название, описание, город, производитель).
+  /// Заполняется слоем данных `src/server/catalog`, вручную не редактируется.
+  searchText     String        @default("")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
 }
