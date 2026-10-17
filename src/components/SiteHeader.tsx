@@ -3,12 +3,13 @@ import { Suspense } from "react";
 import { getCurrentUser } from "@/server/auth/session";
 import { initials } from "./initials";
 import { Logo } from "./Logo";
-import { mainNav, routes, secondaryNav } from "./navigation";
+import { ModeSwitch, ModeSwitchView } from "./ModeSwitch";
+import { routes, secondaryNav } from "./navigation";
 
 const navLink =
   "rounded-[calc(var(--u)*16)] px-[calc(var(--u)*8)] whitespace-nowrap transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-white";
 
-/** Верхнее меню: одна синяя плашка с белым логотипом, разделами и аватаром (макет «Поиск. Покупатель»). */
+/** Верхнее меню: синяя плашка с логотипом, ползунком режима, разделами и аватаром (макет «Стартовая страница»). */
 export function SiteHeader() {
   return (
     <header className="px-[calc(var(--u)*40)] pt-[calc(var(--u)*35)] max-md:px-3 max-md:pt-3">
@@ -24,14 +25,13 @@ export function SiteHeader() {
           <Logo tone="white" className="h-[calc(var(--u)*80)] w-auto max-md:h-10" />
         </Link>
 
-        <ul className="flex items-center gap-[calc(var(--u)*48)] max-md:order-last max-md:w-full max-md:justify-around md:ml-[calc(var(--u)*15)] md:flex-1">
-          {mainNav.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href} className={navLink}>
-                {item.label}
-              </Link>
-            </li>
-          ))}
+        <div className="shrink-0 max-md:order-last max-md:mx-auto md:ml-[calc(var(--u)*22)]">
+          <Suspense fallback={<ModeSwitchView active={null} />}>
+            <ModeSwitch />
+          </Suspense>
+        </div>
+
+        <ul className="flex items-center gap-[calc(var(--u)*48)] max-md:ml-auto max-md:gap-4 max-md:text-base md:flex-1">
           {secondaryNav.map((item, i) => (
             <li key={item.href} className={i === 0 ? "md:ml-auto" : undefined}>
               <Link href={item.href} className={navLink}>

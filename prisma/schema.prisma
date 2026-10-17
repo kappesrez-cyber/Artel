@@ -43,6 +43,11 @@ model Organization {
   dealsAsBuyer    Deal[]                 @relation("DealBuyer")
   reviewsWritten  Review[]               @relation("ReviewAuthor")
   reviewsReceived Review[]               @relation("ReviewTarget")
+  /// Звёзды на счету предприятия: покупаются (`StarPurchase`) и вкладываются в заказы (`OrderBoost`).
+  starBalance     Int                    @default(0)
+  orders          Order[]
+  orderBoosts     OrderBoost[]
+  starPurchases   StarPurchase[]
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 }
@@ -217,4 +222,119 @@ model Product {
 
   @@index([organizationId])
   @@index([status])
+}
+
+/// Заказ на рынке: заказчик не нашёл позицию в каталоге и описывает, что ему нужно, как в тендере.
+/// Предприятия видят открытые заказы в режиме продавца («Продавцам», `/market`).
+enum OrderStatus {
+  /// На рынке: виден производителям.
+  OPEN
+  /// Заказчик нашёл исполнителя или снял заказ.
+  CLOSED
+}
+
+model Order {
+  id              String            @id @default(cuid())
+  customerId      String
+  customer        Organization      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdByUserId String?
+  /// Что нужно: «Подшипник 6205-2RS для комбайна Claas».
+  title           String
+  /// Раздел «Информация»: назначение, где используется, чем заменить импорт.
+  description     String
+  /// Раздел «Основное ТЗ»: размеры, материалы, допуски, стандарты.
+  specification   String?
+  quantity        Int?
+  /// Единица количества: шт., кг, комплект.
+  unit            String            @default("шт.")
+  /// Ориентировочный бюджет на весь заказ, в рублях.
+  budget          Decimal?          @db.Decimal(14, 2)
+  /// Когда нужно получить.
+  deadline        DateTime?         @db.Date
+  /// Город поставки.
+  city            String?
+  contactName     String
+  contactPhone    String?
+  contactEmail    String?
+  status          OrderStatus       @default(OPEN)
+  /// Сумма всех вложенных звёзд. Хранится в заказе, чтобы рынок сортировался по ней.
+  stars           Int               @default(0)
+  attachments     OrderAttachment[]
+  boosts          OrderBoost[]
+  closedAt        DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([status, stars(sort: Desc), createdAt(sort: Desc)])
+  @@index([customerId])
+}
+
+enum OrderAttachmentKind {
+  /// Файл технического задания.
+  SPECIFICATION
+  /// Чертежи, схемы, паспорта, фото образца.
+  TECHNICAL
+}
+
+/// Файл к заказу. Хранится прямо в базе (до 4 МБ на заказ), чтобы не зависеть от внешнего хранилища.
+model OrderAttachment {
+  id        String              @id @default(cuid())
+  orderId   String
+  order     Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind      OrderAttachmentKind
+  fileName  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime            @default(now())
+
+  @@index([orderId])
+}
+
+/// Звёзды, вложенные в заказ. Вкладывать может и сам заказчик, и любое другое предприятие,
+/// которому нужна такая же позиция: тогда оно указывает свой объём, и производитель видит общий спрос.
+model OrderBoost {
+  id             String       @id @default(cuid())
+  orderId        String
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  stars          Int
+  /// Сколько нужно этому предприятию (для присоединившихся к заказу).
+  quantity       Int?
+  comment        String?
+  createdAt      DateTime     @default(now())
+
+  @@index([orderId])
+  @@index([organizationId])
+}
+
+enum StarPurchaseStatus {
+  /// Платёж создан, ждём подтверждения от платёжного провайдера.
+  PENDING
+  /// Оплачено: звёзды зачислены.
+  PAID
+  CANCELLED
+}
+
+/// Покупка звёзд. Оплату проводит платёжный провайдер (`src/server/stars/payments.ts`);
+/// пока подключена тестовая заглушка `stub`.
+model StarPurchase {
+  id                String             @id @default(cuid())
+  organizationId    String
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId            String?
+  stars             Int
+  /// Сумма к оплате в рублях.
+  amount            Decimal            @db.Decimal(14, 2)
+  provider          String
+  /// Номер платежа у провайдера.
+  providerPaymentId String?            @unique
+  status            StarPurchaseStatus @default(PENDING)
+  paidAt            DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([organizationId, createdAt])
 }

@@ -4,6 +4,8 @@ import { z } from "zod";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.url(),
+  /** Кто принимает оплату звёзд. Пока есть только тестовая заглушка, см. `src/server/stars/payments.ts`. */
+  PAYMENT_PROVIDER: z.enum(["stub"]).default("stub"),
 });
 
 export type Env = z.infer<typeof envSchema>;

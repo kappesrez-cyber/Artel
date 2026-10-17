@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { secondaryButtonClass } from "@/components/form";
+import { dangerButtonClass, secondaryButtonClass } from "@/components/form";
 import { documentKindLabels } from "@/components/labels";
 import { requireOrganizationUser } from "@/server/auth/access";
 import { formatDate } from "@/server/catalog/format";
@@ -68,10 +68,7 @@ async function Documents() {
                         </button>
                       </form>
                       <form action={removeDocument.bind(null, doc.id)}>
-                        <button
-                          type="submit"
-                          className={`${secondaryButtonClass} hover:border-red-400 hover:text-red-700`}
-                        >
+                        <button type="submit" className={dangerButtonClass}>
                           Удалить
                         </button>
                       </form>

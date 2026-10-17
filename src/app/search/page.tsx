@@ -29,7 +29,7 @@ async function Results({ searchParams }: Pick<PageProps<"/search">, "searchParam
           </p>
         )}
         <Link
-          href={routes.newOrder}
+          href={query ? `${routes.newOrder}?q=${encodeURIComponent(query)}` : routes.newOrder}
           className="bg-brand-dark mt-[calc(var(--u)*60)] w-full max-w-[calc(var(--u)*1643)] rounded-[calc(var(--u)*35)] px-[calc(var(--u)*66)] py-[calc(var(--u)*58)] text-[calc(var(--u)*75)] leading-none font-extrabold tracking-[-0.01em] text-white transition-opacity hover:opacity-90 max-md:p-5 max-md:text-2xl"
         >
           Хотите разместить карточку на заказ?

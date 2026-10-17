@@ -18,6 +18,8 @@ export const buttonClass =
 export const secondaryButtonClass =
   "inline-flex items-center justify-center rounded-full border-2 border-gray-200 px-5 py-2.5 font-bold text-gray-800 transition-colors hover:border-brand disabled:opacity-50";
 
+export const dangerButtonClass = `${secondaryButtonClass} hover:border-red-400 hover:text-red-700`;
+
 type FieldProps = {
   label: string;
   name: string;

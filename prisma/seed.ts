@@ -4,7 +4,9 @@ import "dotenv/config";
 import { hashPassword } from "@/server/auth/password";
 import { createProduct, listOrganizationProducts, updateProduct } from "@/server/catalog/products";
 import { db } from "@/server/db";
+import { createOrder } from "@/server/orders/orders";
 import { createOrganization, updateOrganization } from "@/server/organizations/organizations";
+import { boostOrder } from "@/server/stars/stars";
 
 /** Пароль обоих демо-аккаунтов. Данные демонстрационные, секрета в них нет. */
 const DEMO_PASSWORD = "artel-demo";
@@ -158,9 +160,83 @@ async function main() {
     });
   }
 
+  await seedMarket(sellerId, buyerId);
+
   console.log(
     `Сид: «${seller.organization.name}» и «${buyer.organization.name}». ` +
       `Вход: ${seller.user.email} / ${buyer.user.email}, пароль ${DEMO_PASSWORD}`,
+  );
+}
+
+/** Заказы на рынке и звёзды: чтобы в режиме «Продавцам» было что открыть. Один раз. */
+async function seedMarket(sellerId: string, buyerId: string) {
+  if ((await db().order.count()) > 0) return;
+  const userOf = async (organizationId: string) =>
+    (
+      await db().membership.findFirstOrThrow({
+        where: { organizationId },
+        select: { userId: true },
+      })
+    ).userId;
+  const [sellerUser, buyerUser] = await Promise.all([userOf(sellerId), userOf(buyerId)]);
+  // Стартовые звёзды демо-аккаунтов: часть уйдёт в заказы ниже, остальное — попробовать самому.
+  await db().organization.updateMany({
+    where: { id: { in: [sellerId, buyerId] } },
+    data: { starBalance: { increment: 20 } },
+  });
+
+  const contacts = { contactName: "Демо-покупатель", contactPhone: "+7 900 000-00-02" };
+  const bearing = await createOrder(
+    buyerId,
+    buyerUser,
+    {
+      title: "Подшипник 6205-2RS для комбайна",
+      description:
+        "Замена импортному подшипнику SKF в приводе жатки. Нужна партия к посевной, с паспортом качества.",
+      specification:
+        "Внутренний диаметр 25 мм, наружный 52 мм, ширина 15 мм.\nДвустороннее резиновое уплотнение 2RS.\nКласс точности не ниже 0 (ГОСТ 520-2011).",
+      quantity: "200",
+      budget: "180000",
+      deadline: new Date(Date.now() + 45 * 86_400_000).toISOString().slice(0, 10),
+      city: "Краснодар",
+      stars: "5",
+      ...contacts,
+    },
+    [],
+  );
+  await boostOrder(sellerId, sellerUser, bearing.id, {
+    stars: 3,
+    quantity: 120,
+    comment: "Нужны такие же для собственного парка техники, доставка в Анкоридж.",
+  });
+  await createOrder(
+    buyerId,
+    buyerUser,
+    {
+      title: "Манжеты для гидроцилиндров погрузчика",
+      description:
+        "Ищем отечественного производителя манжет взамен импортных, поставки раз в квартал.",
+      quantity: "500",
+      city: "Краснодар",
+      ...contacts,
+    },
+    [],
+  );
+  await createOrder(
+    sellerId,
+    sellerUser,
+    {
+      title: "Ферментный препарат для хлебопечения",
+      description: "Нужен аналог импортной амилазы для линии производства хлеба.",
+      specification: "Активность не ниже 10 000 ед./г, сертификат ХАССП.",
+      quantity: "50",
+      unit: "кг",
+      budget: "350000",
+      stars: "2",
+      contactName: "Демо-продавец",
+      contactEmail: "sales@obnal.example",
+    },
+    [],
   );
 }
 

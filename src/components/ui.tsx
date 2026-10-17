@@ -99,3 +99,17 @@ export function Stars({ rating }: { rating: number }) {
 export function PageFallback() {
   return <div className="h-64 animate-pulse rounded-3xl bg-gray-100" />;
 }
+
+/** Звёзды продвижения заказа: «★ 12». Без звёзд не показывается. */
+export function StarCount({ stars, className = "" }: { stars: number; className?: string }) {
+  if (stars <= 0) return null;
+  return (
+    <span
+      title={`Вложено звёзд: ${stars}`}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-3 py-1 font-extrabold tracking-normal whitespace-nowrap text-amber-700 ${className}`}
+    >
+      <span aria-hidden>★</span>
+      <span className="sr-only">Звёзд:</span> {stars}
+    </span>
+  );
+}
