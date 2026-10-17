@@ -14,10 +14,13 @@
     "test:watch": "vitest",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm test",
     "postinstall": "prisma generate",
+    "db:start": "prisma dev --name artel --detach --port 51213 --db-port 51214 --shadow-db-port 51215",
+    "db:stop": "prisma dev stop artel",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate dev && prisma generate",
     "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -45,6 +48,7 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "prisma": "^7.10.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.5"
   },

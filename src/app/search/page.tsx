@@ -1,22 +1,63 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
-import { PlaceholderPage } from "@/components/PlaceholderPage";
+import { ProductCard } from "@/components/ProductCard";
+import { routes } from "@/components/navigation";
+import { searchProducts } from "@/server/catalog/products";
 
 export const metadata: Metadata = { title: "Результаты поиска" };
 
-async function Query({ searchParams }: Pick<PageProps<"/search">, "searchParams">) {
+const heading =
+  "text-[calc(var(--u)*75)] leading-[1.2] font-extrabold tracking-[-0.01em] text-gray-900 max-md:text-3xl";
+
+async function Results({ searchParams }: Pick<PageProps<"/search">, "searchParams">) {
   const { q } = await searchParams;
-  const query = (Array.isArray(q) ? q[0] : q)?.trim();
-  if (!query) return null;
-  return <p className="text-xl">Вы искали: «{query}»</p>;
+  const query = (Array.isArray(q) ? q[0] : q)?.trim() ?? "";
+  await connection();
+  const products = await searchProducts(query);
+  // Даты готовности считаются от момента просмотра.
+  const now = new Date();
+
+  if (products.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-[calc(var(--u)*30)] text-center">
+        <h1 className={heading}>К сожалению, по запросу ничего не найдено</h1>
+        {query && (
+          <p className="text-[calc(var(--u)*48)] leading-none font-bold tracking-[-0.04em] max-md:text-xl">
+            «{query}»
+          </p>
+        )}
+        <Link
+          href={routes.newOrder}
+          className="bg-brand-dark mt-[calc(var(--u)*60)] w-full max-w-[calc(var(--u)*1643)] rounded-[calc(var(--u)*35)] px-[calc(var(--u)*66)] py-[calc(var(--u)*58)] text-[calc(var(--u)*75)] leading-none font-extrabold tracking-[-0.01em] text-white transition-opacity hover:opacity-90 max-md:p-5 max-md:text-2xl"
+        >
+          Хотите разместить карточку на заказ?
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <h1 className={heading}>{query ? "Найдено по вашему запросу:" : "Все предложения:"}</h1>
+      <ul className="mt-[calc(var(--u)*30)] grid gap-x-[calc(var(--u)*75)] gap-y-[calc(var(--u)*50)] max-md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {products.map((product) => (
+          <li key={product.id}>
+            <ProductCard product={product} now={now} />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
 }
 
 export default function Page({ searchParams }: PageProps<"/search">) {
   return (
-    <PlaceholderPage title="Результаты поиска">
-      <Suspense>
-        <Query searchParams={searchParams} />
+    <main className="flex-1 px-[calc(var(--u)*42)] pt-[calc(var(--u)*50)] pb-[calc(var(--u)*60)] max-md:px-3 max-md:pt-6">
+      <Suspense fallback={<p className={`${heading} opacity-40`}>Ищем…</p>}>
+        <Results searchParams={searchParams} />
       </Suspense>
-    </PlaceholderPage>
+    </main>
   );
 }

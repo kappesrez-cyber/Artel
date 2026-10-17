@@ -4,7 +4,7 @@ import localFont from "next/font/local";
 /** Основной шрифт интерфейса (меню, строка поиска). */
 export const golos = Golos_Text({
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "700"],
+  weight: ["400", "700", "800"],
   variable: "--font-golos",
 });
 
