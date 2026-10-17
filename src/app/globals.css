@@ -2,22 +2,23 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
+  /* Макет нарисован под ширину 1920px: размеры элементов задаются в «пикселях макета»
+     и масштабируются вместе с окном, но не меньше чем вдвое. */
+  --u: clamp(0.5px, calc(100vw / 1920), 1px);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: #2074a8;
+  --color-brand-dark: #19587e;
+  --color-brand-gray: #dadada;
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    var(--font-golos), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial,
+    sans-serif;
+  --font-display: var(--font-unbounded), var(--font-golos), sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

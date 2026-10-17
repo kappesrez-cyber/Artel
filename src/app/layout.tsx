@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { SiteHeader } from "@/components/SiteHeader";
+import { golos, unbounded } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "ПромПул",
-    template: "%s · ПромПул",
+    default: "Artel",
+    template: "%s · Artel",
   },
   description:
     "Инженерно-производственный хаб: поиск отечественной замены импортным комплектующим и промышленная кооперация для AgTech и FoodTech.",
@@ -12,8 +14,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ru" className="h-full antialiased">
-      <body className="flex min-h-full flex-col">{children}</body>
+    <html lang="ru" className={`${golos.variable} ${unbounded.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col">
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   );
 }
