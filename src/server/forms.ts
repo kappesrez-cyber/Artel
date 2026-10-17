@@ -1,8 +1,14 @@
 import "server-only";
 import { z } from "zod";
 import type { FormState } from "@/components/form-state";
-import { AccountError } from "./auth/accounts";
-import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
+
+/** Ошибки, текст которых можно показать пользователю как есть (см. `errors.ts`, `AccountError`). */
+const userFacingErrors = new Set([
+  "AccountError",
+  "ForbiddenError",
+  "ConflictError",
+  "NotFoundError",
+]);
 
 /** Чекбокс формы: отмечен — "on", не отмечен — поля нет. */
 export const checkbox = (form: FormData, name: string) => form.get(name) === "on";
@@ -31,17 +37,26 @@ export function toFormState(error: unknown): FormState {
     }
     return { error: formError ?? "Проверьте поля формы", fieldErrors };
   }
-  if (
-    error instanceof AccountError ||
-    error instanceof ForbiddenError ||
-    error instanceof ConflictError ||
-    error instanceof NotFoundError
-  ) {
+  // По имени, а не instanceof: так проверка не ломается, если dev-сервер подхватил
+  // устаревшую копию модуля с классами ошибок.
+  if (error instanceof Error && userFacingErrors.has(error.name)) {
     return { error: error.message };
   }
   if (typeof error === "object" && error && "code" in error && error.code === "P2002") {
     return { error: "Такая запись уже есть (например, этот ИНН уже занят)" };
   }
   console.error("Форма: необработанная ошибка", error);
+  // P2021/P2022 — в базе нет таблицы или колонки: не применены миграции.
+  if (
+    process.env.NODE_ENV === "development" &&
+    typeof error === "object" &&
+    error &&
+    "code" in error &&
+    (error.code === "P2021" || error.code === "P2022")
+  ) {
+    return {
+      error: "База данных не обновлена: выполните npm run db:deploy и перезапустите сервер",
+    };
+  }
   return { error: "Что-то пошло не так. Попробуйте ещё раз" };
 }
