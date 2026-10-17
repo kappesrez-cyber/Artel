@@ -1,0 +1,12 @@
+// Схема базы данных ПромПул.
+// Модели предметной области (пользователи, компании, запросы, каталог и т.д.)
+// будут добавляться отдельными миграциями: `npm run db:migrate -- --name <имя>`.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
