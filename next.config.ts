@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // Файлы заказа (до 4 МБ вместе) приходят в Server Action вместе с формой.
+    serverActions: { bodySizeLimit: "5mb" },
+  },
   turbopack: {
     rules: {
       "*.css": {

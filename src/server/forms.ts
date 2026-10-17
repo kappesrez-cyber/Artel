@@ -13,6 +13,13 @@ const userFacingErrors = new Set([
 /** Чекбокс формы: отмечен — "on", не отмечен — поля нет. */
 export const checkbox = (form: FormData, name: string) => form.get(name) === "on";
 
+/** Куда вернуть пользователя: только относительный адрес этого сайта, иначе `fallback`. */
+export function safeNext(value: unknown, fallback: string): string {
+  const next = typeof value === "string" ? value : "";
+  // «//host» и «/\\host» браузер понимает как другой сайт.
+  return /^\/(?![/\\])/.test(next) ? next : fallback;
+}
+
 /** Поля формы объектом: без служебных полей Server Actions и без пароля (его не возвращаем). */
 export function formFields(form: FormData): Record<string, string> {
   const fields: Record<string, string> = {};

@@ -4,14 +4,7 @@ import { redirect } from "next/navigation";
 import type { FormState } from "@/components/form-state";
 import { authenticate, registerAccount } from "@/server/auth/accounts";
 import { endSession, startSession } from "@/server/auth/session";
-import { checkbox, formFields, toFormState } from "@/server/forms";
-
-/** Куда вернуть после входа: только относительный адрес этого сайта. */
-function safeNext(value: FormDataEntryValue | null): string {
-  const next = typeof value === "string" ? value : "";
-  // «//host» и «/\host» браузер понимает как другой сайт.
-  return /^\/(?![/\\])/.test(next) ? next : "/profile";
-}
+import { checkbox, formFields, safeNext, toFormState } from "@/server/forms";
 
 export async function login(_prev: FormState, form: FormData): Promise<FormState> {
   const values = formFields(form);
@@ -23,7 +16,7 @@ export async function login(_prev: FormState, form: FormData): Promise<FormState
   }
   if (!userId) return { error: "Неверный email или пароль", values };
   await startSession(userId);
-  redirect(safeNext(form.get("next")));
+  redirect(safeNext(form.get("next"), "/profile"));
 }
 
 export async function register(_prev: FormState, form: FormData): Promise<FormState> {

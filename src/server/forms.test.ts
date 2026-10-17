@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { AccountError } from "./auth/accounts";
 import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
-import { toFormState } from "./forms";
+import { safeNext, toFormState } from "./forms";
 
 describe("toFormState", () => {
   it.each([
@@ -22,5 +22,17 @@ describe("toFormState", () => {
 
   it("прочие ошибки не раскрывает", () => {
     expect(toFormState(new Error("секрет")).error).not.toContain("секрет");
+  });
+});
+
+describe("safeNext", () => {
+  it("пропускает адреса этого сайта", () => {
+    expect(safeNext("/market/1?x=2", "/profile")).toBe("/market/1?x=2");
+  });
+
+  it("не пускает на другой сайт", () => {
+    for (const next of ["//evil.example", "/\\evil.example", "https://evil.example", "", null]) {
+      expect(safeNext(next, "/profile")).toBe("/profile");
+    }
   });
 });

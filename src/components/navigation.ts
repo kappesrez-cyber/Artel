@@ -15,6 +15,9 @@ export const routes = {
   searchByPhoto: "/search/photo",
   searchByVoice: "/search/voice",
   newOrder: "/orders/new",
+  market: "/market",
+  myOrders: "/profile/orders",
+  stars: "/profile/stars",
 } as const;
 
 /** Публичная страница предприятия. */
@@ -23,8 +26,25 @@ export const companyHref = (id: string) => `/companies/${encodeURIComponent(id)}
 /** Страница позиции каталога. */
 export const productHref = (id: string) => `/products/${encodeURIComponent(id)}`;
 
-// «Продавцам» убрано из меню по макету: у продавца будет свой режим, страница /sellers остаётся.
-export const mainNav = [{ href: routes.buyers, label: "Покупателям" }] as const;
+/** Заказ на рынке. */
+export const orderHref = (id: string) => `/market/${encodeURIComponent(id)}`;
+
+/**
+ * Ползунок режима в шапке (макет «Стартовая страница»): покупатель ищет в каталоге,
+ * предприятие в режиме продавца смотрит заказы на рынке. Режим определяется адресом.
+ */
+export const modes = [
+  { mode: "buyer", href: routes.home, label: "Покупателям" },
+  { mode: "seller", href: routes.market, label: "Продавцам" },
+] as const;
+
+export type Mode = (typeof modes)[number]["mode"];
+
+export function modeForPath(pathname: string): Mode {
+  return pathname === routes.market || pathname.startsWith(`${routes.market}/`)
+    ? "seller"
+    : "buyer";
+}
 
 export const secondaryNav = [
   { href: routes.pricing, label: "Тарифы" },
