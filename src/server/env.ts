@@ -4,11 +4,6 @@ import { z } from "zod";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.url(),
-  /** Ключ API продавца до появления авторизации. Не задан — API продавца выключено. */
-  SELLER_API_TOKEN: z.preprocess(
-    (value) => (value === "" ? undefined : value),
-    z.string().min(16).optional(),
-  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

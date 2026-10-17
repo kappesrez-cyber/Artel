@@ -15,4 +15,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Server-only code lives in `src/server/` and imports `server-only`. Read env through `env()` from `src/server/env.ts`.
 - Schema changes: edit `prisma/schema.prisma`, then `npm run db:migrate -- --name <name>` and commit the migration.
 - User-facing text is in Russian.
-- Catalog reads/writes go through `src/server/catalog` (keeps `searchText` and ownership checks in one place); seller API routes call `checkSellerAccess` until real auth exists.
+- Catalog reads/writes go through `src/server/catalog` (keeps `searchText` and ownership checks in one place).
+- Auth lives in `src/server/auth`: DB sessions in an httpOnly cookie. Pages call `requireOrganizationUser()` inside `<Suspense>`; API routes call `authorizeOrganization(orgId, { seller })`; every Server Action re-checks the session.
+- Deals and reviews go through `src/server/deals` (status rules in `transitions.ts`); reviews only for COMPLETED deals.
+- Preview deploys: Vercel + Neon, build command `npm run vercel-build` (migrate, seed, build). Demo logins are in README.

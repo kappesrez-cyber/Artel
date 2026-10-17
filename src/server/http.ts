@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { NotFoundError } from "./errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 
 /** Тело запроса как JSON; при битом JSON — `undefined`, и дальше сработает валидация. */
 export async function readJson(request: Request): Promise<unknown> {
@@ -21,6 +21,12 @@ export function errorResponse(error: unknown): Response {
   }
   if (error instanceof NotFoundError) {
     return Response.json({ error: error.message }, { status: 404 });
+  }
+  if (error instanceof ForbiddenError) {
+    return Response.json({ error: error.message }, { status: 403 });
+  }
+  if (error instanceof ConflictError) {
+    return Response.json({ error: error.message }, { status: 409 });
   }
   if (isUniqueViolation(error)) {
     return Response.json({ error: "Такая запись уже есть" }, { status: 409 });

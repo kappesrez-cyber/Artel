@@ -41,3 +41,13 @@ export function formatPrice(price: string): string {
   // Пробелы-разделители разрядов неразрывные, чтобы цена не переносилась.
   return `${formatted.replace(/\s/g, " ")} ₽`;
 }
+
+/** Дата события (создана, завершена) по московскому времени: 17.10.2026. */
+export function formatMoment(date: Date): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    timeZone: DISPLAY_TIME_ZONE,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
