@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { Suspense } from "react";
-import { routes } from "@/components/navigation";
+import { Suspense, type ReactNode } from "react";
+import { buttonClass } from "@/components/form";
+import { companyHref, routes } from "@/components/navigation";
+import { Card } from "@/components/ui";
+import { getCurrentUser } from "@/server/auth/session";
 import { formatDate, formatPrice, readyDate } from "@/server/catalog/format";
-import { getPublishedProduct } from "@/server/catalog/products";
+import { getPublishedProduct, type ProductView } from "@/server/catalog/products";
+import { DealOfferForm } from "./DealOfferForm";
 
 export const metadata: Metadata = { title: "Позиция каталога" };
 
@@ -15,8 +19,17 @@ async function Product({ params }: Pick<PageProps<"/products/[id]">, "params">) 
   const product = await getPublishedProduct(id);
   if (!product) notFound();
 
-  const facts = [
-    ["Производитель", product.organization.name],
+  const facts: [string, ReactNode][] = [
+    [
+      "Производитель",
+      <Link
+        key="org"
+        href={companyHref(product.organization.id)}
+        className="text-brand hover:opacity-80"
+      >
+        {product.organization.name}
+      </Link>,
+    ],
     ["Город", product.city],
     ["Срок производства", `${product.leadTimeDays} дн.`],
     ["Будет готово", formatDate(readyDate(product.leadTimeDays))],
@@ -37,7 +50,56 @@ async function Product({ params }: Pick<PageProps<"/products/[id]">, "params">) 
           </div>
         ))}
       </dl>
+      <Suspense>
+        <DealOffer product={product} />
+      </Suspense>
     </article>
+  );
+}
+
+/** Блок сделки: форма для покупателя, подсказка для всех остальных. */
+async function DealOffer({ product }: { product: ProductView }) {
+  const user = await getCurrentUser();
+  let body: ReactNode;
+  if (!user?.organization) {
+    body = (
+      <div className="flex flex-wrap items-center gap-4">
+        <p className="text-lg">Войдите от имени предприятия, чтобы предложить сделку.</p>
+        <Link
+          href={`${routes.login}?next=${encodeURIComponent(`/products/${product.id}`)}`}
+          className={buttonClass}
+        >
+          Войти
+        </Link>
+      </div>
+    );
+  } else if (user.organization.id === product.organization.id) {
+    body = (
+      <p className="text-lg">
+        Это ваша позиция.{" "}
+        <Link href={`/profile/products/${product.id}`} className="text-brand font-bold">
+          Изменить
+        </Link>
+      </p>
+    );
+  } else if (!user.organization.isBuyer) {
+    body = (
+      <p className="text-lg">
+        Чтобы покупать, включите режим покупателя в{" "}
+        <Link href="/profile/company" className="text-brand font-bold">
+          профиле предприятия
+        </Link>
+        .
+      </p>
+    );
+  } else {
+    body = <DealOfferForm productId={product.id} />;
+  }
+  return (
+    <Card className="mt-2 flex flex-col gap-4">
+      <h2 className="text-2xl font-extrabold">Сделка</h2>
+      {body}
+    </Card>
   );
 }
 

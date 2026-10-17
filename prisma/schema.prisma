@@ -10,20 +10,176 @@ datasource db {
   provider = "postgresql"
 }
 
-/// Организация на платформе. Пока только производители (продавцы), позже — и заказчики.
-/// Позиции каталога принадлежат организации; когда появится авторизация,
-/// пользователь получит доступ к позициям через членство в организации.
+/// Предприятие на платформе: одна учётная запись и для продаж, и для закупок.
+/// Режимы продавца и покупателя включаются флагами `isSeller` и `isBuyer`.
+/// Сотрудники получают доступ через членство (`Membership`).
 model Organization {
-  id        String    @id @default(cuid())
-  /// Название, как его видит покупатель: «ООО Обнал».
-  name      String
-  /// ИНН, когда организация пройдёт верификацию.
-  inn       String?   @unique
+  id              String                 @id @default(cuid())
+  /// Название, как его видит контрагент: «ООО Обнал».
+  name            String
+  /// ИНН (10 цифр у юрлица, 12 у ИП).
+  inn             String?                @unique
+  /// ОГРН (13 цифр) или ОГРНИП (15 цифр).
+  ogrn            String?
   /// Город регистрации. У каждой позиции свой город производства.
-  city      String?
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  city            String?
+  legalAddress    String?
+  /// Чем занимается предприятие: продукция, мощности, отрасли.
+  description     String?
+  website         String?
+  phone           String?
+  email           String?
+  foundedYear     Int?
+  /// Продаёт: может заводить позиции каталога и принимать сделки.
+  isSeller        Boolean                @default(true)
+  /// Покупает: может предлагать сделки по позициям других предприятий.
+  isBuyer         Boolean                @default(true)
+  /// Когда платформа проверила реквизиты. Пока проставляется вручную.
+  verifiedAt      DateTime?
+  products        Product[]
+  memberships     Membership[]
+  documents       OrganizationDocument[]
+  dealsAsSeller   Deal[]                 @relation("DealSeller")
+  dealsAsBuyer    Deal[]                 @relation("DealBuyer")
+  reviewsWritten  Review[]               @relation("ReviewAuthor")
+  reviewsReceived Review[]               @relation("ReviewTarget")
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+}
+
+/// Человек, который входит на сайт. Представляет одно или несколько предприятий.
+model User {
+  id           String       @id @default(cuid())
+  /// В нижнем регистре; по нему входят.
+  email        String       @unique
+  /// Как обращаться: «Иван Петров».
+  name         String
+  /// scrypt, формат см. `src/server/auth/password.ts`.
+  passwordHash String
+  memberships  Membership[]
+  sessions     Session[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+/// Сессия входа. В cookie лежит случайный токен, в базе — только его SHA-256.
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum MemberRole {
+  /// Создал аккаунт предприятия, управляет всем.
+  OWNER
+  /// Сотрудник: каталог, сделки, документы.
+  MEMBER
+}
+
+model Membership {
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           MemberRole   @default(MEMBER)
+  createdAt      DateTime     @default(now())
+
+  @@id([userId, organizationId])
+  @@index([organizationId])
+}
+
+enum DocumentKind {
+  /// Учредительные документы, выписка ЕГРЮЛ.
+  REGISTRATION
+  /// Сертификаты и декларации соответствия.
+  CERTIFICATE
+  /// Лицензии и разрешения.
+  LICENSE
+  /// Бухгалтерская и финансовая отчётность.
+  FINANCIAL_REPORT
+  /// Протоколы испытаний, системы качества (ISO, ХАССП).
+  QUALITY
+  OTHER
+}
+
+/// Документ или отчёт предприятия. Файлы пока хранятся по ссылке (`url`).
+model OrganizationDocument {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  kind           DocumentKind @default(OTHER)
+  title          String
+  /// Номер документа, если есть.
+  number         String?
+  issuedAt       DateTime?    @db.Date
+  validUntil     DateTime?    @db.Date
+  url            String?
+  /// Виден ли документ на публичной странице предприятия.
+  isPublic       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+/// Ход сделки: покупатель предлагает, продавец принимает, покупатель подтверждает получение.
+enum DealStatus {
+  REQUESTED
+  ACCEPTED
+  /// Успешная сделка: учитывается в счётчике и открывает отзывы.
+  COMPLETED
+  CANCELLED
+}
+
+/// Сделка между двумя предприятиями, обычно по позиции каталога.
+model Deal {
+  id              String       @id @default(cuid())
+  sellerId        String
+  seller          Organization @relation("DealSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyerId         String
+  buyer           Organization @relation("DealBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  productId       String?
+  product         Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  /// Название на момент сделки: позицию могут переименовать или удалить.
+  title           String
+  quantity        Int          @default(1)
+  /// Цена за единицу на момент сделки, в рублях.
+  unitPrice       Decimal?     @db.Decimal(14, 2)
+  comment         String?
+  status          DealStatus   @default(REQUESTED)
+  createdByUserId String?
+  acceptedAt      DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  reviews         Review[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([sellerId, status])
+  @@index([buyerId, status])
+}
+
+/// Отзыв одного предприятия о другом. Только по завершённой сделке, один от каждой стороны.
+model Review {
+  id                   String       @id @default(cuid())
+  dealId               String
+  deal                 Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  authorOrganizationId String
+  authorOrganization   Organization @relation("ReviewAuthor", fields: [authorOrganizationId], references: [id], onDelete: Cascade)
+  targetOrganizationId String
+  targetOrganization   Organization @relation("ReviewTarget", fields: [targetOrganizationId], references: [id], onDelete: Cascade)
+  /// От 1 до 5.
+  rating               Int
+  text                 String
+  createdAt            DateTime     @default(now())
+
+  @@unique([dealId, authorOrganizationId])
+  @@index([targetOrganizationId])
 }
 
 /// Видимость позиции. В поиске показываются только опубликованные.
@@ -37,7 +193,7 @@ enum ProductStatus {
 }
 
 /// Позиция каталога производителя: деталь, узел, ингредиент.
-/// Заполняется производителем в режиме продавца (через API `/api/organizations/{id}/products`).
+/// Заполняется производителем в режиме продавца: в личном кабинете или через API `/api/organizations/{id}/products`.
 model Product {
   id             String        @id @default(cuid())
   organizationId String
@@ -55,6 +211,7 @@ model Product {
   /// Нормализованный текст для поиска (название, описание, город, производитель).
   /// Заполняется слоем данных `src/server/catalog`, вручную не редактируется.
   searchText     String        @default("")
+  deals          Deal[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 

@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { getCurrentUser } from "@/server/auth/session";
+import { initials } from "./initials";
 import { Logo } from "./Logo";
 import { mainNav, routes, secondaryNav } from "./navigation";
 
@@ -38,14 +41,39 @@ export function SiteHeader() {
           ))}
         </ul>
 
-        <Link
-          href={routes.profile}
-          aria-label="Личный кабинет"
-          className="grid size-[calc(var(--u)*105)] shrink-0 place-items-center rounded-full border-[calc(var(--u)*11)] border-[#dadada] bg-[#958f8f] transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white max-md:ml-auto max-md:size-11 max-md:border-4 md:ml-[calc(var(--u)*92)]"
-        >
-          <span className="size-[calc(var(--u)*43)] rounded-full bg-[#dadada] max-md:size-4" />
-        </Link>
+        <Suspense fallback={<Avatar href={routes.login} label="Войти" />}>
+          <AccountAvatar />
+        </Suspense>
       </nav>
     </header>
+  );
+}
+
+/** Аватар справа: инициалы предприятия, если вошли, иначе серый кружок со ссылкой на вход. */
+async function AccountAvatar() {
+  const user = await getCurrentUser();
+  if (!user) return <Avatar href={routes.login} label="Войти" />;
+  const name = user.organization?.name ?? user.name;
+  return (
+    <Avatar href={routes.profile} label={`Личный кабинет: ${name}`} initials={initials(name)} />
+  );
+}
+
+function Avatar({ href, label, initials }: { href: string; label: string; initials?: string }) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      className="grid size-[calc(var(--u)*105)] shrink-0 place-items-center rounded-full border-[calc(var(--u)*11)] border-[#dadada] bg-[#958f8f] transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white max-md:ml-auto max-md:size-11 max-md:border-4 md:ml-[calc(var(--u)*92)]"
+    >
+      {initials ? (
+        <span className="text-[calc(var(--u)*36)] font-extrabold tracking-normal text-white max-md:text-sm">
+          {initials}
+        </span>
+      ) : (
+        <span className="size-[calc(var(--u)*43)] rounded-full bg-[#dadada] max-md:size-4" />
+      )}
+    </Link>
   );
 }

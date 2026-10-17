@@ -9,11 +9,16 @@ export const routes = {
   pricing: "/pricing",
   about: "/about",
   profile: "/profile",
+  login: "/login",
+  register: "/register",
   search: "/search",
   searchByPhoto: "/search/photo",
   searchByVoice: "/search/voice",
   newOrder: "/orders/new",
 } as const;
+
+/** Публичная страница предприятия. */
+export const companyHref = (id: string) => `/companies/${encodeURIComponent(id)}`;
 
 /** Страница позиции каталога. */
 export const productHref = (id: string) => `/products/${encodeURIComponent(id)}`;

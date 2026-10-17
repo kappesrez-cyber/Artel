@@ -57,6 +57,18 @@ export async function getPublishedProduct(id: string): Promise<ProductView | nul
   return row && toView(row);
 }
 
+/** Опубликованные позиции предприятия — для его публичной страницы. */
+export async function listPublishedOrganizationProducts(
+  organizationId: string,
+): Promise<ProductView[]> {
+  const rows = await db().product.findMany({
+    where: { organizationId, status: "PUBLISHED" },
+    orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
+    select: productSelect,
+  });
+  return rows.map(toView);
+}
+
 /** Все позиции организации, включая черновики и архив, — для режима продавца. */
 export async function listOrganizationProducts(organizationId: string): Promise<ProductView[]> {
   await requireOrganization(organizationId);
