@@ -11,5 +11,7 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // Нужен только для `prisma migrate dev` с локальной базой `npm run db:start`.
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });

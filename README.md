@@ -26,22 +26,35 @@ B2B-платформа технологического матчинга и пр
 
 ## Быстрый старт
 
-Нужны Node.js 22+ и Docker.
+Нужен только Node.js 22+. Docker не обязателен: локальную PostgreSQL запускает сам Prisma
+(`prisma dev`, база хранится в папке пользователя и переживает перезапуск).
 
 ```bash
 cp .env.example .env     # переменные окружения
 npm install              # зависимости (+ генерация Prisma Client)
-npm run db:up            # PostgreSQL в Docker
+npm run db:start         # локальная PostgreSQL в фоне (порты 51213–51215)
 npm run db:deploy        # применить миграции
 npm run db:seed          # демо-данные: «Деталь» от «ООО Обнал»
 npm run dev              # http://localhost:3000
 ```
 
 Поиск: введите «деталь» на главной или откройте <http://localhost:3000/search?q=деталь>.
-
 Проверка, что приложение видит базу: <http://localhost:3000/api/health> должен вернуть
 `{"status":"ok","db":"ok"}`.
 
+После перезагрузки компьютера достаточно снова выполнить `npm run db:start` и `npm run dev`.
+Остановить базу: `npm run db:stop`.
+
+### Windows
+
+Команды те же, их можно выполнять в Git Bash. В PowerShell или cmd вместо `cp` используйте
+`copy .env.example .env`. Если порт 51214 занят, поменяйте порты в скрипте `db:start` в
+`package.json` и в `.env`.
+
+### PostgreSQL в Docker (необязательно)
+
+Если Docker установлен, можно использовать его вместо `db:start`: в `.env` раскомментируйте
+строку `DATABASE_URL` для Docker (и закомментируйте две строки выше), затем `npm run db:up`.
 Запустить всё целиком в Docker (приложение + БД):
 
 ```bash
@@ -91,7 +104,7 @@ docker compose --profile app up --build
 │   │   └── db.ts              # единый экземпляр Prisma Client
 │   ├── generated/prisma/      # сгенерированный Prisma Client (не в git)
 │   └── test/                  # вспомогательные файлы для тестов
-├── docker-compose.yml         # PostgreSQL (+ приложение в профиле `app`)
+├── docker-compose.yml         # PostgreSQL в Docker (+ приложение в профиле `app`)
 ├── Dockerfile                 # продакшен-образ (Next.js standalone)
 └── .env.example               # пример переменных окружения
 ```

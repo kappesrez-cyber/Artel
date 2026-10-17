@@ -14,6 +14,8 @@
     "test:watch": "vitest",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm test",
     "postinstall": "prisma generate",
+    "db:start": "prisma dev --name artel --detach --port 51213 --db-port 51214 --shadow-db-port 51215",
+    "db:stop": "prisma dev stop artel",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "db:migrate": "prisma migrate dev && prisma generate",
