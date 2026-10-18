@@ -8,7 +8,11 @@ const optionalText = (max: number) => z.preprocess(empty, z.string().trim().max(
 export const orderInputSchema = z
   .object({
     title: z.string().trim().min(3, "Коротко: что нужно изготовить или поставить").max(200),
-    description: z.string().trim().min(10, "Опишите, для чего нужна позиция").max(5000),
+    description: z
+      .string({ error: "Опишите, для чего нужна позиция" })
+      .trim()
+      .min(10, "Опишите, для чего нужна позиция")
+      .max(5000),
     specification: optionalText(20_000),
     quantity: z.preprocess(
       empty,
@@ -25,6 +29,25 @@ export const orderInputSchema = z
     ),
     deadline: z.preprocess(empty, z.coerce.date({ error: "Проверьте дату" }).nullish()),
     city: optionalText(100),
+    // Опросник из панели «+» строки поиска и формы заказа.
+    needKind: z.preprocess(
+      empty,
+      z.enum(["IMPORT_REPLACEMENT", "MANUFACTURE", "SUPPLY"]).nullish(),
+    ),
+    originalBrand: optionalText(100),
+    originalArticle: optionalText(100),
+    application: optionalText(500),
+    industry: optionalText(100),
+    analogAllowed: z.preprocess(
+      (v) => (v === "yes" ? true : v === "no" ? false : empty(v)),
+      z.boolean().nullish(),
+    ),
+    recurrence: z.preprocess(empty, z.enum(["ONCE", "MONTHLY", "QUARTERLY", "YEARLY"]).nullish()),
+    requiredDocuments: z
+      .array(z.string().trim().min(1).max(100))
+      .max(10)
+      .default([])
+      .transform((list) => [...new Set(list)]),
     contactName: z.string().trim().min(2, "Кому звонить или писать").max(200),
     contactPhone: optionalText(50),
     contactEmail: z.preprocess(empty, z.email("Проверьте email").nullish()),
@@ -40,6 +63,30 @@ export const orderInputSchema = z
   });
 
 export type OrderInput = z.infer<typeof orderInputSchema>;
+
+const needKindText = {
+  IMPORT_REPLACEMENT: "Ищем отечественную замену импортной позиции",
+  MANUFACTURE: "Нужно изготовить по чертежам или ТЗ",
+  SUPPLY: "Нужны регулярные поставки",
+} as const;
+
+/**
+ * Описание заказа, если заказчик заполнил опросник, но не написал своими словами:
+ * собираем его из ответов, чтобы на рынке у заказа был понятный абзац «Информация».
+ */
+export function fillDescription(raw: Record<string, unknown>): Record<string, unknown> {
+  const text = (key: string) => (typeof raw[key] === "string" ? (raw[key] as string).trim() : "");
+  if (text("description")) return raw;
+  const original = [text("originalBrand"), text("originalArticle")].filter(Boolean).join(" ");
+  const kind = needKindText[text("needKind") as keyof typeof needKindText];
+  const parts = [
+    kind && original ? `${kind}: ${original}.` : kind ? `${kind}.` : "",
+    !kind && original ? `Оригинал: ${original}.` : "",
+    text("application") && `Применение: ${text("application")}.`,
+    text("industry") && `Отрасль: ${text("industry")}.`,
+  ].filter(Boolean);
+  return parts.length ? { ...raw, description: parts.join(" ") } : raw;
+}
 
 /** Файлы храним в базе, поэтому держим их маленькими: так заказ укладывается в один запрос. */
 export const MAX_ATTACHMENTS_BYTES = 4 * 1024 * 1024;

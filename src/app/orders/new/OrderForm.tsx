@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, type ReactNode } from "react";
 import { Field, FormMessage, SubmitButton, TextArea } from "@/components/form";
 import { initialFormState } from "@/components/form-state";
+import { ReplacementQuestions } from "@/components/OrderQuestionnaire";
 import { placeOrder } from "./actions";
 
 const fileInput =
@@ -73,6 +74,10 @@ export function OrderForm({
           />
           <Field label="Город поставки" name="city" defaultValue={v.city} state={state} />
         </div>
+      </Part>
+
+      <Part title="Подробности для подбора">
+        <ReplacementQuestions v={v} state={state} />
       </Part>
 
       <Part title="Основное ТЗ">

@@ -19,6 +19,15 @@
     sans-serif;
   --font-display: var(--font-murs-gothic), var(--font-golos), sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Выбранный файл появляется в списке плавно (панель «+» строки поиска). */
+  --animate-in-chip: in-chip 300ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  @keyframes in-chip {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.96);
+    }
+  }
 }
 
 body {

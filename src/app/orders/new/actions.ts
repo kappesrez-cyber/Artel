@@ -16,10 +16,14 @@ const files = (form: FormData, name: string, kind: IncomingFile["kind"]): Incomi
 
 export async function placeOrder(_prev: FormState, form: FormData): Promise<FormState> {
   const user = await requireOrganizationUser(routes.newOrder);
-  const values = formFields(form);
+  const requiredDocuments = form
+    .getAll("requiredDocuments")
+    .filter((v): v is string => typeof v === "string");
+  // Флажков с одним именем несколько: в значения формы — через перевод строки.
+  const values = { ...formFields(form), requiredDocuments: requiredDocuments.join("\n") };
   let id: string;
   try {
-    ({ id } = await createOrder(user.organization.id, user.id, values, [
+    ({ id } = await createOrder(user.organization.id, user.id, { ...values, requiredDocuments }, [
       ...files(form, "specFiles", "SPECIFICATION"),
       ...files(form, "techFiles", "TECHNICAL"),
     ]));

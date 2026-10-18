@@ -19,6 +19,10 @@ export const productStatusSchema = z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]);
 export const productInputSchema = z.object({
   name: text(200),
   description: z.string().trim().max(5000).nullish(),
+  /** Артикул или модель производителя. */
+  article: z.string().trim().max(100).nullish(),
+  /** Импортные аналоги, которые заменяет позиция: «SKF 6205-2RSH, FAG 6205-2RSR». */
+  analogs: z.string().trim().max(1000).nullish(),
   price,
   /** Срок производства в календарных днях (неделя = 7). */
   leadTimeDays: z.number().int().min(0).max(3650),

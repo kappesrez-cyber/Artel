@@ -3,7 +3,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/server/db";
 import { NotFoundError } from "@/server/errors";
 import { productInputSchema, productUpdateSchema } from "./schemas";
-import { buildSearchText, searchTerms } from "./search-text";
+import { rankProducts, type SearchMode } from "./search";
+import { buildSearchText } from "./search-text";
 
 /**
  * Слой данных каталога. Всё чтение и запись позиций идёт через эти функции:
@@ -15,6 +16,8 @@ const productSelect = {
   id: true,
   name: true,
   description: true,
+  article: true,
+  analogs: true,
   price: true,
   leadTimeDays: true,
   city: true,
@@ -33,19 +36,32 @@ function toView(row: ProductRow): ProductView {
   return { ...row, price: row.price.toFixed(2), currency: "RUB" };
 }
 
-/** Поиск покупателя: опубликованные позиции, в тексте которых есть все слова запроса. */
-export async function searchProducts(query: string, limit = 48): Promise<ProductView[]> {
-  const terms = searchTerms(query);
+export type ProductSearchResult = {
+  items: ProductView[];
+  mode: SearchMode;
+  /** Синонимы, которые добавились к словам запроса: «сальник» → «манжета»… */
+  synonyms: string[];
+  /** Исправленные опечатки: «подшибник» → ["подшипник"]. */
+  corrections: Record<string, string[]>;
+};
+
+/** Поиск покупателя по опубликованным позициям. Алгоритм и порядок — в `search.ts`. */
+export async function searchProducts(query: string, limit = 48): Promise<ProductSearchResult> {
+  const { mode, ids, parsed, corrections } = await rankProducts(query, limit);
   const rows = await db().product.findMany({
-    where: {
-      status: "PUBLISHED",
-      AND: terms.map((term) => ({ searchText: { contains: term } })),
-    },
-    orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
-    take: limit,
+    where: { id: { in: ids } },
     select: productSelect,
   });
-  return rows.map(toView);
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  return {
+    mode,
+    items: ids.flatMap((id) => {
+      const row = byId.get(id);
+      return row ? [toView(row)] : [];
+    }),
+    synonyms: [...new Set(parsed.terms.flatMap((t) => t.synonyms))],
+    corrections,
+  };
 }
 
 /** Карточка для покупателя: только опубликованная позиция. */
@@ -124,6 +140,8 @@ export async function updateProduct(
       ...data,
       searchText: buildSearchText({
         name: data.name ?? current.name,
+        article: data.article === undefined ? current.article : data.article,
+        analogs: data.analogs === undefined ? current.analogs : data.analogs,
         description: data.description === undefined ? current.description : data.description,
         city: data.city ?? current.city,
         organizationName: current.organization.name,
@@ -141,6 +159,8 @@ export async function reindexOrganizationProducts(organizationId: string): Promi
     select: {
       id: true,
       name: true,
+      article: true,
+      analogs: true,
       description: true,
       city: true,
       organization: { select: { name: true } },

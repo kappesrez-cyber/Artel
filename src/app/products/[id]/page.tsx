@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
+import { after, connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { buttonClass } from "@/components/form";
 import { companyHref, routes } from "@/components/navigation";
@@ -9,6 +9,7 @@ import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/server/auth/session";
 import { formatDate, formatPrice, readyDate } from "@/server/catalog/format";
 import { getPublishedProduct, type ProductView } from "@/server/catalog/products";
+import { recordProductView } from "@/server/analytics/events";
 import { DealOfferForm } from "./DealOfferForm";
 
 export const metadata: Metadata = { title: "Позиция каталога" };
@@ -18,6 +19,9 @@ async function Product({ params }: Pick<PageProps<"/products/[id]">, "params">) 
   await connection();
   const product = await getPublishedProduct(id);
   if (!product) notFound();
+  // Просмотр записываем после ответа, чтобы не задерживать страницу.
+  const viewer = await getCurrentUser();
+  after(() => recordProductView(product, viewer?.organization?.id ?? null));
 
   const facts: [string, ReactNode][] = [
     [
@@ -30,6 +34,8 @@ async function Product({ params }: Pick<PageProps<"/products/[id]">, "params">) 
         {product.organization.name}
       </Link>,
     ],
+    ...(product.article ? [["Артикул", product.article] as [string, ReactNode]] : []),
+    ...(product.analogs ? [["Заменяет", product.analogs] as [string, ReactNode]] : []),
     ["Город", product.city],
     ["Срок производства", `${product.leadTimeDays} дн.`],
     ["Будет готово", formatDate(readyDate(product.leadTimeDays))],

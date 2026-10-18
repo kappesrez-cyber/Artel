@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isInlineSafe, orderInputSchema, validateAttachments } from "./schemas";
+import { fillDescription, isInlineSafe, orderInputSchema, validateAttachments } from "./schemas";
 
 const base = {
   title: "Подшипник 6205",
@@ -24,6 +24,44 @@ describe("orderInputSchema", () => {
     const result = orderInputSchema.safeParse({ ...base, contactPhone: "" });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["contactPhone"]);
+  });
+});
+
+describe("опросник заказа", () => {
+  it("разбирает ответы опросника", () => {
+    const order = orderInputSchema.parse({
+      ...base,
+      needKind: "IMPORT_REPLACEMENT",
+      originalBrand: "SKF",
+      originalArticle: "6205-2RSH",
+      analogAllowed: "yes",
+      recurrence: "QUARTERLY",
+      requiredDocuments: ["Паспорт качества", "Паспорт качества"],
+    });
+    expect(order).toMatchObject({
+      needKind: "IMPORT_REPLACEMENT",
+      analogAllowed: true,
+      recurrence: "QUARTERLY",
+      requiredDocuments: ["Паспорт качества"],
+    });
+    expect(orderInputSchema.parse({ ...base, analogAllowed: "" }).analogAllowed).toBeNull();
+    expect(orderInputSchema.safeParse({ ...base, needKind: "OTHER" }).success).toBe(false);
+  });
+
+  it("собирает описание из ответов, если его не написали", () => {
+    const filled = fillDescription({
+      ...base,
+      description: "  ",
+      needKind: "IMPORT_REPLACEMENT",
+      originalBrand: "SKF",
+      originalArticle: "6205-2RSH",
+      application: "привод жатки Claas Lexion",
+    });
+    expect(filled.description).toBe(
+      "Ищем отечественную замену импортной позиции: SKF 6205-2RSH. Применение: привод жатки Claas Lexion.",
+    );
+    expect(orderInputSchema.safeParse(filled).success).toBe(true);
+    expect(fillDescription(base).description).toBe(base.description);
   });
 });
 

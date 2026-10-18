@@ -200,28 +200,80 @@ enum ProductStatus {
 /// Позиция каталога производителя: деталь, узел, ингредиент.
 /// Заполняется производителем в режиме продавца: в личном кабинете или через API `/api/organizations/{id}/products`.
 model Product {
-  id             String        @id @default(cuid())
+  id             String                   @id @default(cuid())
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
   description    String?
+  /// Артикул или модель производителя: «ПШ-6205-2RS».
+  article        String?
+  /// Импортные позиции, которые заменяет эта: бренды и артикулы через запятую, «SKF 6205-2RSH, FAG 6205-2RSR».
+  /// Покупатель часто ищет именно по артикулу оригинала.
+  analogs        String?
   /// Цена за единицу в рублях, с копейками.
-  price          Decimal       @db.Decimal(14, 2)
+  price          Decimal                  @db.Decimal(14, 2)
   /// Срок производства в календарных днях. Хранится длительностью, а не датой:
   /// покупатель видит дату готовности, отсчитанную от дня просмотра.
   leadTimeDays   Int
   /// Город, где производится или откуда отгружается позиция.
   city           String
-  status         ProductStatus @default(DRAFT)
-  /// Нормализованный текст для поиска (название, описание, город, производитель).
-  /// Заполняется слоем данных `src/server/catalog`, вручную не редактируется.
-  searchText     String        @default("")
+  status         ProductStatus            @default(DRAFT)
+  /// Нормализованный текст для поиска: название, артикулы (и слитно, и по частям), аналоги,
+  /// описание, город, производитель. Заполняется слоем данных `src/server/catalog`, вручную не редактируется.
+  /// По нему работает нечёткий поиск (триграммы pg_trgm).
+  searchText     String                   @default("")
+  /// Полнотекстовый индекс с русской морфологией. Пересчитывает триггер базы
+  /// `product_search_vector` из name, article, analogs, description и searchText (см. миграцию search).
+  searchVector   Unsupported("tsvector")?
   deals          Deal[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  events         ProductEvent[]
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
 
   @@index([organizationId])
   @@index([status])
+  @@index([searchVector], type: Gin)
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+enum ProductEventKind {
+  /// Позиция показана в результатах поиска.
+  IMPRESSION
+  /// Покупатель открыл карточку позиции.
+  VIEW
+}
+
+/// Показы и просмотры позиций — для аналитики продавца. Свои просмотры не считаются.
+model ProductEvent {
+  id                   String           @id @default(cuid())
+  productId            String
+  product              Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kind                 ProductEventKind
+  /// Предприятие, которое смотрело (если вошло).
+  viewerOrganizationId String?
+  /// Поисковый запрос, по которому позицию показали.
+  searchQueryId        String?
+  searchQuery          SearchQuery?     @relation(fields: [searchQueryId], references: [id], onDelete: SetNull)
+  createdAt            DateTime         @default(now())
+
+  @@index([productId, kind, createdAt])
+  @@index([searchQueryId])
+}
+
+/// Запрос покупателя в поиске. Нужен для аналитики спроса: что ищут и чего не находят.
+model SearchQuery {
+  id                   String         @id @default(cuid())
+  /// Как ввёл покупатель.
+  query                String
+  /// Нормализованный запрос: по нему группируются одинаковые запросы.
+  normalized           String
+  resultsCount         Int
+  viewerOrganizationId String?
+  events               ProductEvent[]
+  createdAt            DateTime       @default(now())
+
+  @@index([createdAt])
+  @@index([normalized])
 }
 
 /// Заказ на рынке: заказчик не нашёл позицию в каталоге и описывает, что ему нужно, как в тендере.
@@ -233,37 +285,68 @@ enum OrderStatus {
   CLOSED
 }
 
+enum OrderNeedKind {
+  /// Найти отечественную замену импортной позиции.
+  IMPORT_REPLACEMENT
+  /// Изготовить по чертежам или ТЗ заказчика.
+  MANUFACTURE
+  /// Регулярные поставки готовой продукции.
+  SUPPLY
+}
+
+enum OrderRecurrence {
+  ONCE
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
 model Order {
-  id              String            @id @default(cuid())
-  customerId      String
-  customer        Organization      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  createdByUserId String?
+  id                String            @id @default(cuid())
+  customerId        String
+  customer          Organization      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdByUserId   String?
   /// Что нужно: «Подшипник 6205-2RS для комбайна Claas».
-  title           String
+  title             String
   /// Раздел «Информация»: назначение, где используется, чем заменить импорт.
-  description     String
+  description       String
   /// Раздел «Основное ТЗ»: размеры, материалы, допуски, стандарты.
-  specification   String?
-  quantity        Int?
+  specification     String?
+  quantity          Int?
   /// Единица количества: шт., кг, комплект.
-  unit            String            @default("шт.")
+  unit              String            @default("шт.")
   /// Ориентировочный бюджет на весь заказ, в рублях.
-  budget          Decimal?          @db.Decimal(14, 2)
+  budget            Decimal?          @db.Decimal(14, 2)
   /// Когда нужно получить.
-  deadline        DateTime?         @db.Date
+  deadline          DateTime?         @db.Date
   /// Город поставки.
-  city            String?
-  contactName     String
-  contactPhone    String?
-  contactEmail    String?
-  status          OrderStatus       @default(OPEN)
+  city              String?
+  /// Что за потребность: замена импорта, разработка по ТЗ, серийная поставка.
+  needKind          OrderNeedKind?
+  /// Оригинал, который заменяем: бренд и артикул или модель.
+  originalBrand     String?
+  originalArticle   String?
+  /// Где применяется: техника, линия, узел.
+  application       String?
+  /// Отрасль заказчика для этой позиции.
+  industry          String?
+  /// Можно ли предложить аналог с близкими характеристиками.
+  analogAllowed     Boolean?
+  /// Разовая закупка или регулярные поставки.
+  recurrence        OrderRecurrence?
+  /// Какие документы нужны с поставкой: сертификат, паспорт качества и т. п.
+  requiredDocuments String[]          @default([])
+  contactName       String
+  contactPhone      String?
+  contactEmail      String?
+  status            OrderStatus       @default(OPEN)
   /// Сумма всех вложенных звёзд. Хранится в заказе, чтобы рынок сортировался по ней.
-  stars           Int               @default(0)
-  attachments     OrderAttachment[]
-  boosts          OrderBoost[]
-  closedAt        DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  stars             Int               @default(0)
+  attachments       OrderAttachment[]
+  boosts            OrderBoost[]
+  closedAt          DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([status, stars(sort: Desc), createdAt(sort: Desc)])
   @@index([customerId])
