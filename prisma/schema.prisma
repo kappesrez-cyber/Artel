@@ -234,6 +234,7 @@ model Product {
   searchVector   Unsupported("tsvector")?
   deals          Deal[]
   events         ProductEvent[]
+  photos         Photo[]
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
 
@@ -350,6 +351,7 @@ model Order {
   /// Сумма всех вложенных звёзд. Хранится в заказе, чтобы рынок сортировался по ней.
   stars             Int               @default(0)
   attachments       OrderAttachment[]
+  photos            Photo[]
   boosts            OrderBoost[]
   closedAt          DateTime?
   createdAt         DateTime          @default(now())
@@ -379,6 +381,25 @@ model OrderAttachment {
   createdAt DateTime            @default(now())
 
   @@index([orderId])
+}
+
+/// Фотография позиции каталога или заказа (ровно одно из `productId`, `orderId`, см. CHECK в миграции photos).
+/// Хранится в базе, как файлы заказа: браузер заранее уменьшает снимок, так что это сотни килобайт.
+/// Первой на странице показывается фотография с наименьшим `position`.
+model Photo {
+  id        String   @id @default(cuid())
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  mimeType  String
+  size      Int
+  data      Bytes
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId, position])
+  @@index([orderId, position])
 }
 
 /// Звёзды, вложенные в заказ. Вкладывать может и сам заказчик, и любое другое предприятие,

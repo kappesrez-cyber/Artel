@@ -184,3 +184,14 @@ export function ArrowLeftCircleIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+/** Снимок: рамка с горами и солнцем — место под фото позиции или заказа. */
+export function PhotoIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
+      <rect x="3" y="4.5" width="18" height="15" rx="3" fill="currentColor" fillOpacity="0.12" />
+      <circle cx="8.5" cy="9.5" r="1.6" />
+      <path d="m3.5 17 5-5 3.5 3.5 2.5-2.5 6 5.5" />
+    </LineIcon>
+  );
+}

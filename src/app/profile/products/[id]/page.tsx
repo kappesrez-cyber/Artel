@@ -5,6 +5,7 @@ import { requireOrganizationUser } from "@/server/auth/access";
 import { getOrganizationProduct } from "@/server/catalog/products";
 import { NotFoundError } from "@/server/errors";
 import { ProductForm } from "../ProductForm";
+import { PhotoGallery } from "@/components/PhotoGallery";
 import { Card, PageFallback, Section } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Изменить позицию" };
@@ -18,6 +19,16 @@ async function EditProduct({ params }: Pick<PageProps<"/profile/products/[id]">,
   });
   return (
     <Section title={product.name}>
+      <Card className="flex flex-col gap-3">
+        <h2 className="text-2xl font-extrabold">Фотографии</h2>
+        <div className="max-w-md">
+          <PhotoGallery
+            photos={product.photos}
+            alt={product.name}
+            owner={{ productId: product.id }}
+          />
+        </div>
+      </Card>
       <Card>
         <ProductForm
           productId={product.id}

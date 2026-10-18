@@ -2,6 +2,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/server/db";
 import { NotFoundError } from "@/server/errors";
+import { photoOrder } from "@/server/photos/photos";
 import { productInputSchema, productUpdateSchema } from "./schemas";
 import { rankProducts, type SearchMode } from "./search";
 import { buildSearchText } from "./search-text";
@@ -25,6 +26,8 @@ const productSelect = {
   createdAt: true,
   updatedAt: true,
   organization: { select: { id: true, name: true } },
+  /** Только адреса снимков (`/api/photos/{id}`), сами файлы отдаются отдельно. */
+  photos: { select: { id: true }, orderBy: photoOrder },
 } satisfies Prisma.ProductSelect;
 
 type ProductRow = Prisma.ProductGetPayload<{ select: typeof productSelect }>;
