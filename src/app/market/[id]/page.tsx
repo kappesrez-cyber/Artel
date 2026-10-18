@@ -6,6 +6,7 @@ import { Suspense, type ReactNode } from "react";
 import { buttonClass, secondaryButtonClass } from "@/components/form";
 import { orderNeedKindLabels, orderRecurrenceLabels, plural } from "@/components/labels";
 import { companyHref, orderHref, productHref, routes } from "@/components/navigation";
+import { PhotoGallery } from "@/components/PhotoGallery";
 import { Badge, Card, PageFallback, StarAmount, StarCount } from "@/components/ui";
 import { getCurrentUser } from "@/server/auth/session";
 import { formatDate, formatMoment, formatPrice } from "@/server/catalog/format";
@@ -83,14 +84,30 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
           {order.status !== "OPEN" && <Badge tone="gray">Снят с рынка</Badge>}
         </div>
 
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-xl">
-          {facts.map(([label, value]) => (
-            <div key={label} className="contents">
-              <dt className="text-gray-600">{label}</dt>
-              <dd className="font-bold">{value}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* Первое фото сразу видно, сведения о заказе сдвигаются вправо от него. */}
+        <div
+          className={
+            order.photos.length > 0 || isCustomer
+              ? "grid items-start gap-6 sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]"
+              : ""
+          }
+        >
+          {(order.photos.length > 0 || isCustomer) && (
+            <PhotoGallery
+              photos={order.photos}
+              alt={order.title}
+              owner={isCustomer ? { orderId: order.id } : undefined}
+            />
+          )}
+          <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-xl">
+            {facts.map(([label, value]) => (
+              <div key={label} className="contents">
+                <dt className="text-gray-600">{label}</dt>
+                <dd className="min-w-0 font-bold break-words">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
 
         <Collapsible title="Информация">
           <p className="text-lg whitespace-pre-line text-gray-800">{order.description}</p>

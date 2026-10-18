@@ -3,6 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { queryScope, searchTerms } from "@/server/catalog/search-text";
 import { db } from "@/server/db";
 import { ForbiddenError, NotFoundError } from "@/server/errors";
+import { photoOrder } from "@/server/photos/photos";
 import { boostOrderInTransaction } from "@/server/stars/stars";
 import {
   fillDescription,
@@ -170,6 +171,7 @@ const detailSelect = {
     orderBy: { createdAt: "asc" },
     select: { id: true, kind: true, fileName: true, size: true, mimeType: true },
   },
+  photos: { select: { id: true }, orderBy: photoOrder },
   boosts: {
     orderBy: { createdAt: "desc" },
     select: {
@@ -204,6 +206,7 @@ export type OrderDetailView = OrderCardView &
     | "contactEmail"
     | "closedAt"
     | "attachments"
+    | "photos"
     | "boosts"
   >;
 
@@ -233,6 +236,7 @@ function pickDetail(row: DetailRow) {
     contactEmail,
     closedAt: row.closedAt,
     attachments: row.attachments,
+    photos: row.photos,
     boosts: row.boosts,
   };
 }

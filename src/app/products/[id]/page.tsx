@@ -5,6 +5,7 @@ import { after, connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { buttonClass } from "@/components/form";
 import { companyHref, routes } from "@/components/navigation";
+import { PhotoGallery } from "@/components/PhotoGallery";
 import { Card } from "@/components/ui";
 import { getCurrentUser } from "@/server/auth/session";
 import { formatDate, formatPrice, readyDate } from "@/server/catalog/format";
@@ -42,8 +43,13 @@ async function Product({ params }: Pick<PageProps<"/products/[id]">, "params">) 
     ["Цена", formatPrice(product.price)],
   ];
 
-  return (
-    <article className="flex flex-col gap-6">
+  const isOwner = viewer?.organization?.id === product.organization.id;
+  // Фото слева, текст сдвигается вправо. Без фото страница остаётся узкой колонкой,
+  // но владелец видит место под снимки, чтобы сразу их добавить.
+  const withPhotos = product.photos.length > 0 || isOwner;
+
+  const text = (
+    <div className="flex min-w-0 flex-col gap-6">
       <h1 className="text-4xl font-extrabold tracking-[-0.01em] text-gray-900 md:text-5xl">
         {product.name}
       </h1>
@@ -59,7 +65,29 @@ async function Product({ params }: Pick<PageProps<"/products/[id]">, "params">) 
       <Suspense>
         <DealOffer product={product} />
       </Suspense>
-    </article>
+    </div>
+  );
+
+  return (
+    <div className={`flex flex-col gap-8 ${withPhotos ? "" : "mx-auto w-full max-w-3xl"}`}>
+      {withPhotos ? (
+        <article className="grid items-start gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-12">
+          <div className="md:sticky md:top-6">
+            <PhotoGallery
+              photos={product.photos}
+              alt={product.name}
+              owner={isOwner ? { productId: product.id } : undefined}
+            />
+          </div>
+          {text}
+        </article>
+      ) : (
+        <article>{text}</article>
+      )}
+      <Link href={routes.search} className="text-brand self-start font-bold hover:opacity-80">
+        ← Ко всем предложениям
+      </Link>
+    </div>
   );
 }
 
@@ -111,13 +139,10 @@ async function DealOffer({ product }: { product: ProductView }) {
 
 export default function Page({ params }: PageProps<"/products/[id]">) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+    <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-12">
       <Suspense>
         <Product params={params} />
       </Suspense>
-      <Link href={routes.search} className="text-brand self-start font-bold hover:opacity-80">
-        ← Ко всем предложениям
-      </Link>
     </main>
   );
 }
