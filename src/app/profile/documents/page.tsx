@@ -54,7 +54,7 @@ async function Documents() {
                       </span>
                       <div className="flex flex-wrap gap-2 pt-1">
                         {doc.isPublic ? (
-                          <Badge tone="green">Виден всем</Badge>
+                          <Badge tone="solid">Виден всем</Badge>
                         ) : (
                           <Badge>Только для вас</Badge>
                         )}

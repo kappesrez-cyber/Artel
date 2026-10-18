@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { StarIcon } from "./icons";
 
 /** Общие блоки кабинета и публичной страницы предприятия. */
 
@@ -6,16 +7,20 @@ export function RoleBadges({ isSeller, isBuyer }: { isSeller: boolean; isBuyer: 
   return (
     <div className="flex flex-wrap gap-2">
       {isSeller && <Badge tone="brand">Продавец</Badge>}
-      {isBuyer && <Badge tone="green">Покупатель</Badge>}
+      {isBuyer && <Badge tone="solid">Покупатель</Badge>}
     </div>
   );
 }
 
+// Только фирменные цвета; красный оставлен для ошибок и отказов.
 const tones = {
+  /** Светло-синяя плашка: роль, обычный статус. */
   brand: "bg-brand/10 text-brand-dark",
-  green: "bg-green-100 text-green-800",
-  gray: "bg-gray-100 text-gray-700",
-  amber: "bg-amber-100 text-amber-800",
+  /** Тёмно-синяя: готово, опубликовано, завершено. */
+  solid: "bg-brand-dark text-white",
+  /** Синяя рамка: ждёт действия. */
+  outline: "bg-white text-brand ring-2 ring-inset ring-brand/40",
+  gray: "bg-brand-gray/60 text-gray-700",
   red: "bg-red-100 text-red-700",
 } as const;
 
@@ -53,7 +58,9 @@ export function Section({
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-3xl border-2 border-gray-200 bg-white p-5 md:p-6 ${className}`}>
+    <div
+      className={`rounded-3xl border border-gray-200/80 bg-white p-5 shadow-[var(--shadow-soft)] md:p-6 ${className}`}
+    >
       {children}
     </div>
   );
@@ -66,10 +73,10 @@ export function StatTile({
 }: {
   label: string;
   value: ReactNode;
-  hint?: string;
+  hint?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-3xl bg-gray-50 p-5">
+    <div className="from-brand/[0.07] ring-brand/10 flex flex-col gap-1 rounded-3xl bg-linear-to-br to-white p-5 ring-1">
       <span className="text-gray-500">{label}</span>
       <span className="text-brand-dark text-4xl font-extrabold">{value}</span>
       {hint && <span className="text-sm text-gray-500">{hint}</span>}
@@ -85,19 +92,38 @@ export function Empty({ children }: { children: ReactNode }) {
   );
 }
 
-/** Звёзды рейтинга: «★★★★☆». */
+/** Звёзды рейтинга: закрашенные синие и пустые серые. */
 export function Stars({ rating }: { rating: number }) {
   const full = Math.round(rating);
   return (
-    <span aria-label={`Оценка ${rating} из 5`} className="tracking-widest text-amber-500">
-      {"★".repeat(full)}
-      <span className="text-gray-300">{"★".repeat(5 - full)}</span>
+    <span
+      role="img"
+      aria-label={`Оценка ${rating} из 5`}
+      className="inline-flex items-center gap-0.5 align-[-0.1em]"
+    >
+      {[1, 2, 3, 4, 5].map((n) => (
+        <StarIcon
+          key={n}
+          className={`size-[1em] ${n <= full ? "text-brand" : "text-brand-gray"}`}
+        />
+      ))}
+    </span>
+  );
+}
+
+/** Число со звездой: «15 ★» в тексте и плитках. */
+export function StarAmount({ value, className = "" }: { value: ReactNode; className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-[0.2em] whitespace-nowrap ${className}`}>
+      {value}
+      <StarIcon className="text-brand size-[0.85em]" />
+      <span className="sr-only">звёзд</span>
     </span>
   );
 }
 
 export function PageFallback() {
-  return <div className="h-64 animate-pulse rounded-3xl bg-gray-100" />;
+  return <div className="bg-brand-gray/40 h-64 animate-pulse rounded-3xl" />;
 }
 
 /** Звёзды продвижения заказа: «★ 12». Без звёзд не показывается. */
@@ -106,9 +132,9 @@ export function StarCount({ stars, className = "" }: { stars: number; className?
   return (
     <span
       title={`Вложено звёзд: ${stars}`}
-      className={`inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-3 py-1 font-extrabold tracking-normal whitespace-nowrap text-amber-700 ${className}`}
+      className={`bg-brand-dark inline-flex shrink-0 items-center gap-[0.3em] rounded-full px-[0.6em] py-[0.25em] font-extrabold tracking-normal whitespace-nowrap text-white shadow-[0_4px_12px_rgb(25_88_126/0.3)] ${className}`}
     >
-      <span aria-hidden>★</span>
+      <StarIcon className="size-[0.9em]" />
       <span className="sr-only">Звёзд:</span> {stars}
     </span>
   );

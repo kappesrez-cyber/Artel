@@ -16,9 +16,9 @@ async function Company() {
       title="О предприятии"
       action={
         o.verifiedAt ? (
-          <Badge tone="green">Реквизиты проверены</Badge>
+          <Badge tone="solid">Реквизиты проверены</Badge>
         ) : (
-          <Badge tone="amber">Реквизиты не проверены</Badge>
+          <Badge tone="outline">Реквизиты не проверены</Badge>
         )
       }
     >

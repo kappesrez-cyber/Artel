@@ -5,6 +5,7 @@ import {
   extractCodes,
   normalize,
   parseQuery,
+  queryScope,
   requiredMatches,
   searchTerms,
   switchLayout,
@@ -130,5 +131,43 @@ describe("артикул из соседних слов", () => {
   it("не склеивает обычное слово с числом", () => {
     expect(parseQuery("подшипник 6205 для комбайна").codes).toEqual([]);
     expect(parseQuery("ремень spb 2000").codes).toContain("spb2000");
+  });
+});
+
+describe("запрос без слов", () => {
+  // Раньше «...» считался пустым запросом, и на точки выдавался весь каталог.
+  it.each([
+    "...",
+    ".",
+    " . . . ",
+    "…",
+    "?!",
+    ",,;",
+    "- -",
+    "—",
+    "«»",
+    "()[]{}",
+    "*/+=",
+    "№",
+    " \t. \n",
+  ])("«%s» ничего не ищет", (query) => {
+    expect(parseQuery(query).terms).toEqual([]);
+    expect(parseQuery(query).codes).toEqual([]);
+    expect(queryScope(query)).toBe("none");
+    expect(searchTerms(query)).toEqual([]);
+  });
+
+  it("из одних служебных слов тоже ничего не ищет", () => {
+    expect(queryScope("для и на")).toBe("none");
+  });
+
+  it("пустая строка и пробелы показывают всё", () => {
+    expect(queryScope("")).toBe("all");
+    expect(queryScope("   ")).toBe("all");
+  });
+
+  it("слово или артикул в окружении знаков ищутся", () => {
+    expect(queryScope("...подшипник...")).toBe("search");
+    expect(queryScope("6205-2RS.")).toBe("search");
   });
 });

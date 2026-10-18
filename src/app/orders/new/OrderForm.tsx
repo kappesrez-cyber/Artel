@@ -5,6 +5,7 @@ import { useActionState, type ReactNode } from "react";
 import { Field, FormMessage, SubmitButton, TextArea } from "@/components/form";
 import { initialFormState } from "@/components/form-state";
 import { ReplacementQuestions } from "@/components/OrderQuestionnaire";
+import { StarAmount } from "@/components/ui";
 import { placeOrder } from "./actions";
 
 const fileInput =
@@ -132,7 +133,7 @@ export function OrderForm({
         </div>
       </Part>
 
-      <section className="flex flex-col gap-4 rounded-[calc(var(--u)*35)] border-4 border-amber-200 bg-amber-50/60 p-5 md:p-6">
+      <section className="border-brand/20 bg-brand/[0.05] flex flex-col gap-4 rounded-[calc(var(--u)*35)] border-2 p-5 md:p-6">
         <h2 className="text-[calc(var(--u)*56)] font-extrabold tracking-[-0.01em] max-md:text-2xl">
           Продвинуть за звёзды
         </h2>
@@ -153,7 +154,11 @@ export function OrderForm({
             className="w-48"
           />
           <p className="pb-3 text-gray-700">
-            На счету: <b>{balance} ★</b>.{" "}
+            На счету:{" "}
+            <b>
+              <StarAmount value={balance} />
+            </b>
+            .{" "}
             <Link href={buyStarsHref} className="text-brand font-bold hover:opacity-80">
               Купить звёзды
             </Link>

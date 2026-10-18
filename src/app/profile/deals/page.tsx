@@ -13,9 +13,9 @@ import { ReviewForm } from "./ReviewForm";
 export const metadata: Metadata = { title: "Сделки" };
 
 const statusTone = {
-  REQUESTED: "amber",
+  REQUESTED: "outline",
   ACCEPTED: "brand",
-  COMPLETED: "green",
+  COMPLETED: "solid",
   CANCELLED: "gray",
 } as const;
 

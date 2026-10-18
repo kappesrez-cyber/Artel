@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { buttonClass } from "@/components/form";
 import { plural } from "@/components/labels";
 import { orderHref, routes } from "@/components/navigation";
-import { Card, Empty, PageFallback, Section, StatTile } from "@/components/ui";
+import { Card, Empty, PageFallback, Section, StarAmount, StatTile } from "@/components/ui";
 import { requireOrganizationUser } from "@/server/auth/access";
 import { formatMoment } from "@/server/catalog/format";
 import { safeNext } from "@/server/forms";
@@ -29,13 +29,13 @@ async function Stars({ searchParams }: Pick<PageProps<"/profile/stars">, "search
   return (
     <div className="flex flex-col gap-10">
       {credited > 0 && (
-        <p role="status" className="rounded-2xl bg-green-50 px-4 py-3 text-green-800">
+        <p role="status" className="bg-brand/10 text-brand-dark rounded-2xl px-4 py-3">
           Зачислено {plural(credited, "звезда", "звезды", "звёзд")}.
         </p>
       )}
       <Section title="Звёзды">
         <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
-          <StatTile label="На счету" value={`${balance} ★`} />
+          <StatTile label="На счету" value={<StarAmount value={balance} />} />
           <p className="self-center text-gray-600">
             Звёзды поднимают заказ на рынке выше остальных. Вкладывайте их в свои заказы или в
             чужие, если вам нужна такая же позиция: производитель увидит общий спрос и сможет
@@ -49,7 +49,7 @@ async function Stars({ searchParams }: Pick<PageProps<"/profile/stars">, "search
 
       <Section title="Купить звёзды">
         {isStub && (
-          <p className="rounded-2xl bg-amber-50 px-4 py-3 text-amber-800">
+          <p className="bg-brand-gray/50 rounded-2xl px-4 py-3 text-gray-800">
             Приём платежей ещё не подключён: оплата пройдёт на тестовой странице без списания денег.
           </p>
         )}
@@ -57,7 +57,10 @@ async function Stars({ searchParams }: Pick<PageProps<"/profile/stars">, "search
           {starPackages.map((pack) => (
             <li key={pack.stars}>
               <Card className="flex h-full flex-col gap-3 text-center">
-                <span className="text-4xl font-extrabold text-amber-600">{pack.stars} ★</span>
+                <StarAmount
+                  value={pack.stars}
+                  className="text-brand-dark text-4xl font-extrabold"
+                />
                 <span className="text-xl font-bold">{pack.price.toLocaleString("ru-RU")} ₽</span>
                 <span className="text-sm text-gray-500">
                   {Math.round(pack.price / pack.stars)} ₽ за звезду
@@ -97,9 +100,9 @@ async function Stars({ searchParams }: Pick<PageProps<"/profile/stars">, "search
                   <span className="text-sm text-gray-500">{formatMoment(entry.at)}</span>
                 </span>
                 <span
-                  className={`text-lg font-extrabold ${entry.stars > 0 ? "text-green-700" : "text-amber-700"}`}
+                  className={`text-lg font-extrabold ${entry.stars > 0 ? "text-brand" : "text-gray-600"}`}
                 >
-                  {entry.stars > 0 ? `+${entry.stars}` : entry.stars} ★
+                  <StarAmount value={entry.stars > 0 ? `+${entry.stars}` : entry.stars} />
                 </span>
               </li>
             ))}

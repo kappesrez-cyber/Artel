@@ -1,7 +1,7 @@
 import "server-only";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/server/db";
-import { parseQuery, requiredMatches, stem, type ParsedQuery } from "./search-text";
+import { parseQuery, queryScope, requiredMatches, stem, type ParsedQuery } from "./search-text";
 
 /**
  * Поиск покупателя по каталогу. Всё считает PostgreSQL, без внешних сервисов:
@@ -24,7 +24,7 @@ import { parseQuery, requiredMatches, stem, type ParsedQuery } from "./search-te
  */
 
 export type SearchMode =
-  /** Пустой запрос: все предложения, сначала надёжные продавцы. */
+  /** Пустой запрос: все предложения, сначала надёжные продавцы. Запрос из одних знаков («...») — не пустой. */
   | "all"
   /** Совпали все нужные слова. */
   | "exact"
@@ -65,7 +65,9 @@ type Row = { id: string; matched: number; corrected: number };
 
 export async function rankProducts(query: string, limit: number): Promise<SearchOutcome> {
   const parsed = parseQuery(query);
-  if (parsed.terms.length === 0 && parsed.codes.length === 0) {
+  const scope = queryScope(query, parsed);
+  if (scope === "none") return { mode: "exact", ids: [], parsed, corrections: {} };
+  if (scope === "all") {
     const rows = await db().$queryRaw<{ id: string }[]>`
       SELECT p.id FROM "Product" p ${joins}
       WHERE p.status = 'PUBLISHED'

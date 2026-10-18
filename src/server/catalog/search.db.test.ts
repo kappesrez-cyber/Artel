@@ -110,6 +110,12 @@ describe.skipIf(!enabled)("поиск по каталогу (PostgreSQL)", async
     expect((await search("сальник")).names[0]).toBe(seal);
   });
 
+  it.each(["...", " . . ", "?!", "—"])("на «%s» ничего не выдаёт", async (query) => {
+    const { mode, ids } = await rankProducts(query, 10);
+    expect(mode).toBe("exact");
+    expect(ids).toEqual([]);
+  });
+
   it("на точный артикул, которого нет, показывает похожие и честно говорит об этом", async () => {
     const { names, mode } = await search("подшипник 6206-2RS");
     expect(mode).toBe("partial");

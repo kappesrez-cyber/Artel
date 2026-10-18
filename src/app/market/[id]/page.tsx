@@ -6,7 +6,7 @@ import { Suspense, type ReactNode } from "react";
 import { buttonClass, secondaryButtonClass } from "@/components/form";
 import { orderNeedKindLabels, orderRecurrenceLabels, plural } from "@/components/labels";
 import { companyHref, orderHref, productHref, routes } from "@/components/navigation";
-import { Badge, Card, PageFallback, StarCount } from "@/components/ui";
+import { Badge, Card, PageFallback, StarAmount, StarCount } from "@/components/ui";
 import { getCurrentUser } from "@/server/auth/session";
 import { formatDate, formatMoment, formatPrice } from "@/server/catalog/format";
 import { searchProducts } from "@/server/catalog/products";
@@ -164,7 +164,7 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
           )}
         </Card>
 
-        <Card className="flex flex-col gap-4 border-amber-200">
+        <Card className="border-brand/30 flex flex-col gap-4">
           <div>
             <h2 className="text-2xl font-extrabold">Продвинуть за звёзды</h2>
             <p className="mt-1 text-gray-600">
@@ -248,7 +248,7 @@ function Supporters({ order }: { order: OrderDetailView }) {
               >
                 {b.organization.name}
               </Link>
-              <span className="font-bold text-amber-700">+{b.stars} ★</span>
+              <StarAmount value={`+${b.stars}`} className="text-brand-dark font-bold" />
               {b.organizationId === order.customer.id && <Badge>заказчик</Badge>}
             </span>
             {b.quantity != null && (

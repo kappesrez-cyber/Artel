@@ -1,6 +1,6 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
-import { searchTerms } from "@/server/catalog/search-text";
+import { queryScope, searchTerms } from "@/server/catalog/search-text";
 import { db } from "@/server/db";
 import { ForbiddenError, NotFoundError } from "@/server/errors";
 import { boostOrderInTransaction } from "@/server/stars/stars";
@@ -105,6 +105,8 @@ export async function listMarketOrders({
   sort = "stars",
   limit = 60,
 }: { query?: string; sort?: MarketSort; limit?: number } = {}): Promise<OrderCardView[]> {
+  // «...» или «для» — не пустой запрос: показывать все заказы на него не нужно.
+  if (queryScope(query) === "none") return [];
   const terms = searchTerms(query);
   const rows = await db().order.findMany({
     where: {
