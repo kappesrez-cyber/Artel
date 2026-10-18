@@ -61,7 +61,7 @@ async function Company({ params }: Pick<PageProps<"/companies/[id]">, "params">)
         )}
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile label="Успешных сделок на Artel" value={stats.successfulDeals} />
         <StatTile
           label="Рейтинг"
@@ -118,7 +118,7 @@ async function Company({ params }: Pick<PageProps<"/companies/[id]">, "params">)
           {products.length === 0 ? (
             <Empty>Предприятие ещё не опубликовало позиции.</Empty>
           ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
                 <li key={product.id}>
                   <ProductCard product={product} now={now} />
@@ -133,7 +133,7 @@ async function Company({ params }: Pick<PageProps<"/companies/[id]">, "params">)
         {company.documents.length === 0 ? (
           <Empty>Предприятие пока не открыло документы.</Empty>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {company.documents.map((doc) => (
               <li key={doc.id}>
                 <Card className="flex h-full flex-col gap-1">

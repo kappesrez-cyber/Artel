@@ -40,7 +40,7 @@ export default function Layout({ children }: LayoutProps<"/profile">) {
       <Suspense fallback={<div className="h-24 animate-pulse rounded-3xl bg-gray-100" />}>
         <CabinetHeader />
       </Suspense>
-      <div className="mt-8 grid items-start gap-6 md:grid-cols-[240px_1fr] md:gap-10">
+      <div className="mt-8 grid grid-cols-1 items-start gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:gap-10">
         <Suspense fallback={<CabinetNavList pathname={null} />}>
           <CabinetNav />
         </Suspense>

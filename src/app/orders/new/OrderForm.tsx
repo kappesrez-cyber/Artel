@@ -46,7 +46,7 @@ export function OrderForm({
           defaultValue={v.description}
           state={state}
         />
-        <div className="grid gap-4 sm:grid-cols-[1fr_120px_1fr]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_120px_1fr]">
           <Field
             label="Количество"
             name="quantity"
@@ -65,7 +65,7 @@ export function OrderForm({
             state={state}
           />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field
             label="Нужно к дате"
             name="deadline"
@@ -108,7 +108,7 @@ export function OrderForm({
       </Part>
 
       <Part title="Контакты">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field
             label="Контактное лицо"
             name="contactName"

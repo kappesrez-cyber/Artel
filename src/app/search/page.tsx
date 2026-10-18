@@ -49,7 +49,7 @@ async function Results({ searchParams }: Pick<PageProps<"/search">, "searchParam
     <>
       <h1 className={heading}>{headings[mode]}</h1>
       <SearchNote mode={mode} synonyms={synonyms} corrections={corrections} orderHref={orderHref} />
-      <ul className="mt-[calc(var(--u)*30)] grid gap-x-[calc(var(--u)*75)] gap-y-[calc(var(--u)*50)] max-md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-[calc(var(--u)*30)] grid grid-cols-1 gap-x-[calc(var(--u)*75)] gap-y-[calc(var(--u)*50)] max-md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <li key={product.id}>
             <ProductCard product={product} now={now} />

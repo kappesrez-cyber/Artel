@@ -34,7 +34,7 @@ async function Stars({ searchParams }: Pick<PageProps<"/profile/stars">, "search
         </p>
       )}
       <Section title="Звёзды">
-        <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_2fr]">
           <StatTile label="На счету" value={<StarAmount value={balance} />} />
           <p className="self-center text-gray-600">
             Звёзды поднимают заказ на рынке выше остальных. Вкладывайте их в свои заказы или в
@@ -53,7 +53,7 @@ async function Stars({ searchParams }: Pick<PageProps<"/profile/stars">, "search
             Приём платежей ещё не подключён: оплата пройдёт на тестовой странице без списания денег.
           </p>
         )}
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {starPackages.map((pack) => (
             <li key={pack.stars}>
               <Card className="flex h-full flex-col gap-3 text-center">

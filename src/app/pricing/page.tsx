@@ -81,7 +81,7 @@ export default function Page() {
         <h2 id="compare" className="text-center text-3xl font-extrabold tracking-[-0.01em]">
           Сравнение тарифов
         </h2>
-        <div className="overflow-x-auto rounded-3xl border border-gray-200/80 bg-white shadow-[var(--shadow-soft)]">
+        <div className="relative overflow-x-auto rounded-3xl border border-gray-200/80 bg-white shadow-[var(--shadow-soft)]">
           <table className="w-full min-w-[720px] table-fixed border-collapse text-center">
             <thead>
               <tr>

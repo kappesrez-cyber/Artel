@@ -164,7 +164,7 @@ export function SearchDetails({
 
           <Stage delay="delay-75">
             <h3 className="text-xl font-extrabold text-gray-900">Документы</h3>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FileDrop
                 name="specFiles"
                 title="Техническое задание"
@@ -220,7 +220,7 @@ export function SearchDetails({
                 />
               </Question>
               <Question n={3 + REPLACEMENT_QUESTIONS} title="Сколько, куда и когда?">
-                <div className="grid gap-4 sm:grid-cols-[1fr_110px_1fr]">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_110px_1fr]">
                   <Field
                     label="Количество"
                     name="quantity"
@@ -239,7 +239,7 @@ export function SearchDetails({
                     state={state}
                   />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field
                     label="Нужно к дате"
                     name="deadline"
@@ -265,7 +265,7 @@ export function SearchDetails({
                 />
               </Question>
               <Question n={5 + REPLACEMENT_QUESTIONS} title="Как с вами связаться?">
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Field
                     label="Контактное лицо"
                     name="contactName"

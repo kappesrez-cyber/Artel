@@ -36,7 +36,7 @@ async function PlanOverview({ searchParams }: Pick<PageProps<"/profile/plan">, "
           </Link>
         }
       >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatTile
             label="Сейчас"
             value={plan.name}

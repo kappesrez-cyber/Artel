@@ -32,7 +32,7 @@ const categories: { label: string; query: string; Icon: ComponentType<{ classNam
 
 export default function Home() {
   return (
-    <main className="home relative isolate flex flex-1 flex-col items-center justify-center px-4 pt-[calc(var(--u)*48)] pb-[calc(var(--u)*160)] max-md:pt-6">
+    <main className="home relative isolate flex flex-1 flex-col items-center justify-center overflow-x-clip px-4 pt-[calc(var(--u)*48)] pb-[calc(var(--u)*160)] max-md:pt-6">
       <WordRain />
       <div className="relative flex w-full flex-col items-center gap-[calc(var(--u)*24)]">
         {/* Белое свечение за заголовком и поиском: поток слов не мешает читать. */}

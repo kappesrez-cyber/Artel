@@ -169,7 +169,7 @@ function SellerBlock({ data, period }: { data: SellerAnalytics; period: PeriodDa
         </Card>
       </Section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Section title="Воронка сделок">
           <Card className="flex flex-col gap-3">
             {funnel.map(([label, value], i) => {
@@ -239,7 +239,7 @@ function SellerBlock({ data, period }: { data: SellerAnalytics; period: PeriodDa
             </Link>
           </Empty>
         ) : (
-          <div className="overflow-x-auto rounded-3xl border-2 border-gray-200">
+          <div className="relative overflow-x-auto rounded-3xl border-2 border-gray-200">
             <table className="w-full min-w-[640px] text-left">
               <thead className="bg-gray-50 text-sm text-gray-500">
                 <tr>
@@ -282,7 +282,7 @@ function SellerBlock({ data, period }: { data: SellerAnalytics; period: PeriodDa
       </Section>
 
       <Section title="Репутация">
-        <Card className="grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
+        <Card className="grid grid-cols-1 gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
           <div className="flex flex-col gap-1">
             <span className="text-brand-dark text-5xl font-extrabold">
               {data.reputation.average ?? "—"}
@@ -365,7 +365,7 @@ function MarketBlock({ data, isSeller }: { data: MarketAnalytics; isSeller: bool
   const unmetMax = Math.max(1, ...data.unmet.map((u) => u.n));
   const share = percent(data.emptySearches, data.searches);
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Section title="Чего не находят в поиске">
         <Card className="flex flex-col gap-3">
           <p className="text-gray-600">
