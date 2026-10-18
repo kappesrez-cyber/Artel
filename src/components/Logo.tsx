@@ -1,6 +1,6 @@
 const tones = {
   /** Синий логотип на белом фоне. */
-  brand: { mark: "#19587E", text: "#2074A8" },
+  brand: { mark: "#173780", text: "#2074A8" },
   /** Белый логотип на синей плашке меню. */
   white: { mark: "#FFFFFF", text: "#FFFFFF" },
 };
