@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { buttonClass, secondaryButtonClass } from "@/components/form";
-import { plural } from "@/components/labels";
-import { companyHref, orderHref, routes } from "@/components/navigation";
+import { orderNeedKindLabels, orderRecurrenceLabels, plural } from "@/components/labels";
+import { companyHref, orderHref, productHref, routes } from "@/components/navigation";
 import { Badge, Card, PageFallback, StarCount } from "@/components/ui";
 import { getCurrentUser } from "@/server/auth/session";
 import { formatDate, formatMoment, formatPrice } from "@/server/catalog/format";
+import { searchProducts } from "@/server/catalog/products";
 import { getOrder, type OrderDetailView } from "@/server/orders/orders";
 import { getStarBalance } from "@/server/stars/stars";
 import { setOpen } from "./actions";
@@ -50,6 +51,24 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
   facts.push(["Срок", order.deadline ? formatDate(order.deadline) : "по договорённости"]);
   facts.push(["Размещён", formatMoment(order.createdAt)]);
 
+  // Ответы опросника из панели «+» поиска или формы заказа.
+  const details: [string, ReactNode][] = [];
+  if (order.needKind) details.push(["Задача", orderNeedKindLabels[order.needKind]]);
+  const original = [order.originalBrand, order.originalArticle].filter(Boolean).join(" ");
+  if (original) details.push(["Оригинал", original]);
+  if (order.application) details.push(["Применение", order.application]);
+  if (order.industry) details.push(["Отрасль", order.industry]);
+  if (order.analogAllowed != null) {
+    details.push([
+      "Аналог",
+      order.analogAllowed ? "подойдёт с близкими характеристиками" : "строго по ТЗ",
+    ]);
+  }
+  if (order.recurrence) details.push(["Как часто", orderRecurrenceLabels[order.recurrence]]);
+  if (order.requiredDocuments.length) {
+    details.push(["Документы с поставкой", order.requiredDocuments.join(", ")]);
+  }
+
   const specFiles = order.attachments.filter((f) => f.kind === "SPECIFICATION");
   const techFiles = order.attachments.filter((f) => f.kind === "TECHNICAL");
 
@@ -75,6 +94,16 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
 
         <Collapsible title="Информация">
           <p className="text-lg whitespace-pre-line text-gray-800">{order.description}</p>
+          {details.length > 0 && (
+            <dl className="grid gap-x-6 gap-y-2 text-lg sm:grid-cols-[auto_1fr]">
+              {details.map(([label, value]) => (
+                <div key={label} className="contents">
+                  <dt className="text-gray-600">{label}</dt>
+                  <dd className="font-bold">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </Collapsible>
 
         <Collapsible title="Основное ТЗ">
@@ -96,6 +125,11 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
       </div>
 
       <aside className="flex flex-col gap-6 lg:sticky lg:top-6">
+        {isCustomer && order.status === "OPEN" && (
+          <Suspense>
+            <CatalogMatches order={order} />
+          </Suspense>
+        )}
         <Card className="flex flex-col gap-3">
           <h2 className="text-2xl font-extrabold">Контакты заказчика</h2>
           {viewer ? (
@@ -223,6 +257,30 @@ function Supporters({ order }: { order: OrderDetailView }) {
               </span>
             )}
             {b.comment && <span className="text-sm text-gray-500">{b.comment}</span>}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/** Заказчику: в каталоге, возможно, уже есть то, что он ищет (тот же поиск, что и на главной). */
+async function CatalogMatches({ order }: { order: OrderDetailView }) {
+  const query = [order.title, order.originalBrand, order.originalArticle].filter(Boolean).join(" ");
+  const { items, mode } = await searchProducts(query, 3);
+  if (items.length === 0 || mode === "partial") return null;
+  return (
+    <Card className="border-brand/40 flex flex-col gap-3">
+      <h2 className="text-2xl font-extrabold">Уже есть в каталоге</h2>
+      <ul className="flex flex-col gap-2">
+        {items.map((p) => (
+          <li key={p.id}>
+            <Link href={productHref(p.id)} className="text-brand font-bold hover:opacity-80">
+              {p.name}
+            </Link>
+            <span className="block text-gray-600">
+              {p.organization.name}, {formatPrice(p.price)}
+            </span>
           </li>
         ))}
       </ul>

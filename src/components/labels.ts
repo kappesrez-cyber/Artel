@@ -40,3 +40,38 @@ export function plural(n: number, one: string, few: string, many: string): strin
         : many;
   return `${n} ${word}`;
 }
+
+/** Опросник заказа: что за потребность. */
+export const orderNeedKindLabels = {
+  IMPORT_REPLACEMENT: "Заменить импортную позицию",
+  MANUFACTURE: "Изготовить по чертежам или ТЗ",
+  SUPPLY: "Наладить регулярные поставки",
+} as const;
+
+export const orderRecurrenceLabels = {
+  ONCE: "Разово",
+  MONTHLY: "Ежемесячно",
+  QUARTERLY: "Раз в квартал",
+  YEARLY: "Раз в год",
+} as const;
+
+/** Отрасли заказчика: платформа начинается с AgTech и FoodTech. */
+export const industryOptions = [
+  "Сельхозтехника",
+  "Растениеводство",
+  "Животноводство",
+  "Пищевое производство",
+  "Переработка",
+  "Упаковка",
+  "Другое",
+] as const;
+
+/** Документы, которые заказчик может потребовать с поставкой. */
+export const requiredDocumentOptions = [
+  "Сертификат или декларация ЕАЭС",
+  "Паспорт качества",
+  "Протоколы испытаний",
+  "Сертификат происхождения СТ-1",
+  "Гарантия производителя",
+  "Чертежи и КД на аналог",
+] as const;

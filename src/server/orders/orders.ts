@@ -4,7 +4,12 @@ import { searchTerms } from "@/server/catalog/search-text";
 import { db } from "@/server/db";
 import { ForbiddenError, NotFoundError } from "@/server/errors";
 import { boostOrderInTransaction } from "@/server/stars/stars";
-import { orderInputSchema, validateAttachments, type IncomingFile } from "./schemas";
+import {
+  fillDescription,
+  orderInputSchema,
+  validateAttachments,
+  type IncomingFile,
+} from "./schemas";
 
 /**
  * Заказы на рынке. Заказчик размещает заказ (что нужно, ТЗ, документы, контакты),
@@ -18,7 +23,8 @@ export async function createOrder(
   input: unknown,
   files: IncomingFile[],
 ): Promise<{ id: string }> {
-  const { stars, unit, ...data } = orderInputSchema.parse(input);
+  const raw = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+  const { stars, unit, ...data } = orderInputSchema.parse(fillDescription(raw));
   const attachments = validateAttachments(files);
   const fileData = await Promise.all(
     attachments.map(async ({ kind, file }) => ({
@@ -109,6 +115,9 @@ export async function listMarketOrders({
           { description: { contains: term, mode: "insensitive" } },
           { specification: { contains: term, mode: "insensitive" } },
           { city: { contains: term, mode: "insensitive" } },
+          { originalBrand: { contains: term, mode: "insensitive" } },
+          { originalArticle: { contains: term, mode: "insensitive" } },
+          { application: { contains: term, mode: "insensitive" } },
         ],
       })),
     },
@@ -143,6 +152,14 @@ const detailSelect = {
   ...cardSelect,
   description: true,
   specification: true,
+  needKind: true,
+  originalBrand: true,
+  originalArticle: true,
+  application: true,
+  industry: true,
+  analogAllowed: true,
+  recurrence: true,
+  requiredDocuments: true,
   contactName: true,
   contactPhone: true,
   contactEmail: true,
@@ -172,6 +189,14 @@ export type OrderDetailView = OrderCardView &
     DetailRow,
     | "description"
     | "specification"
+    | "needKind"
+    | "originalBrand"
+    | "originalArticle"
+    | "application"
+    | "industry"
+    | "analogAllowed"
+    | "recurrence"
+    | "requiredDocuments"
     | "contactName"
     | "contactPhone"
     | "contactEmail"
@@ -193,6 +218,14 @@ function pickDetail(row: DetailRow) {
   return {
     description,
     specification,
+    needKind: row.needKind,
+    originalBrand: row.originalBrand,
+    originalArticle: row.originalArticle,
+    application: row.application,
+    industry: row.industry,
+    analogAllowed: row.analogAllowed,
+    recurrence: row.recurrence,
+    requiredDocuments: row.requiredDocuments,
     contactName,
     contactPhone,
     contactEmail,
