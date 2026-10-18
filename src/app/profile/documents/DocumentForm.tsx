@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Checkbox, Field, FormMessage, Select, SubmitButton } from "@/components/form";
+import { Field, FormMessage, Select, SubmitButton } from "@/components/form";
 import { initialFormState } from "@/components/form-state";
 import { documentKindLabels } from "@/components/labels";
 import { addCompanyDocument } from "../actions";
@@ -56,11 +56,6 @@ export function DocumentForm() {
         hint="Яндекс Диск, облако или сайт предприятия. Загрузка файлов прямо на платформу — следующим шагом"
         defaultValue={v.url}
         state={state}
-      />
-      <Checkbox
-        label="Показывать на публичной странице"
-        name="isPublic"
-        defaultChecked={state.values && !state.ok ? v.isPublic === "on" : true}
       />
       <div>
         <SubmitButton pendingText="Добавляем…">Добавить документ</SubmitButton>

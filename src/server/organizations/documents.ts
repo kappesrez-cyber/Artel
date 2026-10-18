@@ -31,7 +31,6 @@ export const documentInputSchema = z.object({
       .max(1000)
       .nullish(),
   ),
-  isPublic: z.boolean().default(true),
 });
 
 const documentSelect = {
@@ -42,11 +41,10 @@ const documentSelect = {
   issuedAt: true,
   validUntil: true,
   url: true,
-  isPublic: true,
   createdAt: true,
 } as const;
 
-/** Все документы предприятия, включая скрытые, — для личного кабинета. */
+/** Все документы предприятия — для личного кабинета. */
 export async function listDocuments(organizationId: string) {
   return db().organizationDocument.findMany({
     where: { organizationId },
@@ -61,18 +59,6 @@ export async function addDocument(organizationId: string, input: unknown) {
     data: { ...data, organizationId },
     select: documentSelect,
   });
-}
-
-export async function setDocumentVisibility(
-  organizationId: string,
-  documentId: string,
-  isPublic: boolean,
-) {
-  const { count } = await db().organizationDocument.updateMany({
-    where: { id: documentId, organizationId },
-    data: { isPublic },
-  });
-  if (count === 0) throw new NotFoundError("Документ не найден");
 }
 
 export async function deleteDocument(organizationId: string, documentId: string) {
