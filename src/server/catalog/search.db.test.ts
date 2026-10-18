@@ -142,4 +142,28 @@ describe.skipIf(!enabled)("поиск по каталогу (PostgreSQL)", async
     const { ids: found } = await rankProducts(`звёздочка ${tag}`, 10);
     expect(found.indexOf(twinB.id)).toBeLessThan(found.indexOf(twinA.id));
   });
+
+  it("при равной релевантности выше продавец с тарифом, истёкший тариф не помогает", async () => {
+    const [a, b] = orgIds;
+    const twinA = await createProduct(a!, { ...obnalProducts[3]!, name: `Шкив ${tag}` });
+    const twinB = await createProduct(b!, { ...obnalProducts[3]!, name: `Шкив ${tag}` });
+    const rank = async () => {
+      const { ids: found } = await rankProducts(`шкив ${tag}`, 10);
+      return [found.indexOf(twinA.id), found.indexOf(twinB.id)];
+    };
+    // Без тарифов выше b (у него отзыв из прошлого теста); Ultra у a перевешивает отзыв.
+    const day = 24 * 60 * 60 * 1000;
+    await db().organization.update({
+      where: { id: a! },
+      data: { plan: "ULTRA", planUntil: new Date(Date.now() + day) },
+    });
+    const [withPlanA, withPlanB] = await rank();
+    expect(withPlanA).toBeLessThan(withPlanB!);
+    await db().organization.update({
+      where: { id: a! },
+      data: { planUntil: new Date(Date.now() - day) },
+    });
+    const [expiredA, expiredB] = await rank();
+    expect(expiredB).toBeLessThan(expiredA!);
+  });
 });

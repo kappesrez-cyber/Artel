@@ -3,6 +3,8 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/server/db";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors";
+import { getPlan } from "@/server/plans/plans";
+import { getOrganizationPlan } from "@/server/plans/subscriptions";
 import {
   availableDealActions,
   nextDealStatus,
@@ -72,6 +74,7 @@ const dealSelect = {
   acceptedAt: true,
   completedAt: true,
   cancelledAt: true,
+  docsHelpRequestedAt: true,
   seller: { select: { id: true, name: true } },
   buyer: { select: { id: true, name: true } },
   reviews: { select: { authorOrganizationId: true, rating: true } },
@@ -142,6 +145,24 @@ export async function changeDealStatus(organizationId: string, dealId: string, a
     data: { status, [timestampFor[status]]: new Date() },
   });
   if (count === 0) throw new ConflictError("Сделка уже изменилась, обновите страницу");
+}
+
+/**
+ * Попросить юриста платформы подготовить документы по сделке (договор, спецификацию,
+ * закрывающие). Входит в тариф Ultra; доступно любой стороне принятой или успешной сделки.
+ */
+export async function requestDocsHelp(organizationId: string, userId: string, dealId: string) {
+  const deal = await findOwnDeal(organizationId, dealId);
+  if (deal.status !== "ACCEPTED" && deal.status !== "COMPLETED") {
+    throw new ConflictError("Документы готовим по принятой или завершённой сделке");
+  }
+  const { tier } = await getOrganizationPlan(organizationId);
+  if (!getPlan(tier).docsHelp)
+    throw new ForbiddenError("Помощь с документами входит в тариф Ultra");
+  await db().deal.updateMany({
+    where: { id: deal.id, docsHelpRequestedAt: null },
+    data: { docsHelpRequestedAt: new Date(), docsHelpRequestedById: userId },
+  });
 }
 
 /** Отзыв о контрагенте по завершённой сделке. Один от каждой стороны. */

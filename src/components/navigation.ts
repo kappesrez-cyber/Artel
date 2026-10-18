@@ -18,6 +18,7 @@ export const routes = {
   market: "/market",
   myOrders: "/profile/orders",
   stars: "/profile/stars",
+  plan: "/profile/plan",
 } as const;
 
 /** Публичная страница предприятия. */

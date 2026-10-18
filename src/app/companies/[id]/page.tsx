@@ -52,6 +52,7 @@ async function Company({ params }: Pick<PageProps<"/companies/[id]">, "params">)
         <div className="flex flex-wrap items-center gap-2">
           <RoleBadges isSeller={company.isSeller} isBuyer={company.isBuyer} />
           {company.verifiedAt && <Badge tone="solid">Реквизиты проверены</Badge>}
+          {company.plan.price > 0 && <Badge tone="outline">Тариф {company.plan.name}</Badge>}
         </div>
         {company.description && (
           <p className="max-w-3xl text-lg whitespace-pre-line text-gray-700">

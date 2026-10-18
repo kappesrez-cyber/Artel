@@ -63,6 +63,7 @@ export async function startStarPurchase(
     select: { id: true },
   });
   const payment = await provider.createPayment({
+    kind: "stars",
     purchaseId: purchase.id,
     amount: pack.price.toFixed(2),
     description: `Artel: ${pack.stars} зв. для продвижения заказов`,

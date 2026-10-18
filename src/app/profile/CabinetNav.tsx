@@ -11,6 +11,7 @@ export const cabinetSections = [
   { href: "/profile/deals", label: "Сделки" },
   { href: "/profile/orders", label: "Мои заказы" },
   { href: "/profile/stars", label: "Звёзды" },
+  { href: "/profile/plan", label: "Тариф" },
   { href: "/profile/reviews", label: "Отзывы" },
   { href: "/profile/analytics", label: "Аналитика" },
 ] as const;

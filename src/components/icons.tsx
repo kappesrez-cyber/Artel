@@ -73,6 +73,14 @@ export function StarIcon({ className, filled = true }: IconProps & { filled?: bo
   );
 }
 
+export function CheckIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
+      <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </LineIcon>
+  );
+}
+
 // Иконки разделов каталога на главной.
 
 export function BearingIcon({ className }: IconProps) {

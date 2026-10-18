@@ -7,7 +7,10 @@ import { requireOrganizationUser } from "@/server/auth/access";
 import { formatMoment, formatPrice } from "@/server/catalog/format";
 import { listDeals, type DealView } from "@/server/deals/deals";
 import { Badge, Card, Empty, PageFallback, Section } from "@/components/ui";
+import { getPlan, type Plan } from "@/server/plans/plans";
+import { getOrganizationPlan } from "@/server/plans/subscriptions";
 import { DealActions } from "./DealActions";
+import { DocsHelp } from "./DocsHelp";
 import { ReviewForm } from "./ReviewForm";
 
 export const metadata: Metadata = { title: "Сделки" };
@@ -19,8 +22,18 @@ const statusTone = {
   CANCELLED: "gray",
 } as const;
 
-function DealCard({ deal }: { deal: DealView }) {
-  const total = deal.unitPrice && formatPrice((Number(deal.unitPrice) * deal.quantity).toFixed(2));
+function DealCard({ deal, plan }: { deal: DealView; plan: Plan }) {
+  const sum = deal.unitPrice ? Number(deal.unitPrice) * deal.quantity : null;
+  const total = sum !== null && formatPrice(sum.toFixed(2));
+  // Комиссию платит продавец; считаем по его тарифу на сегодня.
+  const commission =
+    deal.side === "seller" && sum !== null && deal.status !== "CANCELLED"
+      ? Math.round(sum * plan.commission) / 100
+      : null;
+  const docsHelpAvailable =
+    deal.status === "ACCEPTED" || deal.status === "COMPLETED"
+      ? plan.docsHelp || Boolean(deal.docsHelpRequestedAt)
+      : false;
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -42,6 +55,15 @@ function DealCard({ deal }: { deal: DealView }) {
             {deal.quantity} шт.
             {deal.unitPrice && ` × ${formatPrice(deal.unitPrice)} = ${total}`}
           </span>
+          {commission !== null && (
+            <span className="text-sm text-gray-500">
+              Комиссия платформы по тарифу {plan.name} ({plan.commission}%):{" "}
+              {formatPrice(commission.toFixed(2))}.{" "}
+              <Link href={routes.pricing} className="text-brand font-bold">
+                Тарифы
+              </Link>
+            </span>
+          )}
         </div>
         <div className="flex flex-col items-end gap-1 text-sm text-gray-500">
           <Badge tone={statusTone[deal.status]}>{dealStatusLabels[deal.status]}</Badge>
@@ -53,6 +75,9 @@ function DealCard({ deal }: { deal: DealView }) {
         <p className="rounded-2xl bg-gray-50 px-4 py-3 text-gray-700">«{deal.comment}»</p>
       )}
       <DealActions dealId={deal.id} actions={deal.actions} />
+      {docsHelpAvailable && (
+        <DocsHelp dealId={deal.id} requestedAt={deal.docsHelpRequestedAt?.toISOString() ?? null} />
+      )}
       {deal.canReview && <ReviewForm dealId={deal.id} counterpart={deal.counterpart.name} />}
     </Card>
   );
@@ -60,7 +85,11 @@ function DealCard({ deal }: { deal: DealView }) {
 
 async function Deals() {
   const { organization } = await requireOrganizationUser("/profile/deals");
-  const deals = await listDeals(organization.id);
+  const [deals, current] = await Promise.all([
+    listDeals(organization.id),
+    getOrganizationPlan(organization.id),
+  ]);
+  const plan = getPlan(current.tier);
   const selling = deals.filter((d) => d.side === "seller");
   const buying = deals.filter((d) => d.side === "buyer");
   return (
@@ -73,7 +102,7 @@ async function Deals() {
             <ul className="flex flex-col gap-3">
               {selling.map((deal) => (
                 <li key={deal.id}>
-                  <DealCard deal={deal} />
+                  <DealCard deal={deal} plan={plan} />
                 </li>
               ))}
             </ul>
@@ -94,7 +123,7 @@ async function Deals() {
             <ul className="flex flex-col gap-3">
               {buying.map((deal) => (
                 <li key={deal.id}>
-                  <DealCard deal={deal} />
+                  <DealCard deal={deal} plan={plan} />
                 </li>
               ))}
             </ul>
@@ -106,7 +135,7 @@ async function Deals() {
           <ul className="flex flex-col gap-3">
             {selling.map((deal) => (
               <li key={deal.id}>
-                <DealCard deal={deal} />
+                <DealCard deal={deal} plan={plan} />
               </li>
             ))}
           </ul>
