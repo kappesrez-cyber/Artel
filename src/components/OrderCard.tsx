@@ -12,7 +12,7 @@ export function OrderCard({ order }: { order: OrderCardView }) {
   return (
     <Link
       href={orderHref(order.id)}
-      className={`group hover:border-brand focus-visible:border-brand flex min-h-[calc(var(--u)*318)] flex-col rounded-[calc(var(--u)*31)] border-[calc(var(--u)*8)] bg-white pt-[calc(var(--u)*4)] pr-[calc(var(--u)*13)] pb-[calc(var(--u)*10)] pl-[calc(var(--u)*13)] leading-none font-bold tracking-[-0.04em] transition-colors outline-none max-md:border-4 max-md:p-3 ${order.stars > 0 ? "border-amber-200" : "border-gray-200"}`}
+      className={`group hover:border-brand focus-visible:border-brand flex min-h-[calc(var(--u)*318)] flex-col rounded-[calc(var(--u)*31)] border-[calc(var(--u)*8)] bg-white pt-[calc(var(--u)*4)] pr-[calc(var(--u)*13)] pb-[calc(var(--u)*10)] pl-[calc(var(--u)*13)] leading-none font-bold tracking-[-0.04em] transition-colors outline-none max-md:border-4 max-md:p-3 ${order.stars > 0 ? "border-brand/30" : "border-gray-200"}`}
     >
       <div className="flex items-start justify-between gap-2 pt-[calc(var(--u)*8)]">
         <h2 className="line-clamp-2 pl-[calc(var(--u)*10)] text-[calc(var(--u)*40)] leading-[1.15] text-gray-900 max-md:text-2xl">
@@ -29,7 +29,7 @@ export function OrderCard({ order }: { order: OrderCardView }) {
         {order.totalQuantity != null && ` · ${order.totalQuantity} ${order.unit}`}
       </p>
       {order.supporters > 0 && (
-        <p className="mt-[calc(var(--u)*8)] pl-[calc(var(--u)*3)] text-[calc(var(--u)*26)] text-amber-700 max-md:text-base">
+        <p className="text-brand mt-[calc(var(--u)*8)] pl-[calc(var(--u)*3)] text-[calc(var(--u)*26)] max-md:text-base">
           +{plural(order.supporters, "предприятие", "предприятия", "предприятий")} с тем же запросом
         </p>
       )}

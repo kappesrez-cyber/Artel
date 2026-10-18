@@ -1,4 +1,6 @@
-// Иконки из макета в Figma: строка поиска и карточки результатов.
+// Иконки строки поиска, главной и карточек результатов.
+import type { ReactNode } from "react";
+
 type IconProps = { className?: string };
 
 export function PlusCircleIcon({ className }: IconProps) {
@@ -14,41 +16,141 @@ export function PlusCircleIcon({ className }: IconProps) {
   );
 }
 
+/** Линейные иконки строки поиска и главной: скруглённые концы, толщина 2 из 24, цвет — currentColor. */
+function LineIcon({ className, children }: IconProps & { children: ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className={className}
+    >
+      {children}
+    </svg>
+  );
+}
+
 export function MicIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 60 60" fill="none" aria-hidden className={className}>
+    <LineIcon className={className}>
+      <rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor" fillOpacity="0.15" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21.5M8.5 21.5h7" />
+    </LineIcon>
+  );
+}
+
+/** Камера с лупой в объективе: поиск по фото детали. */
+export function CameraIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
       <path
-        d="M30 35C27.9167 35 26.1458 34.2708 24.6875 32.8125C23.2292 31.3542 22.5 29.5833 22.5 27.5V12.5C22.5 10.4167 23.2292 8.64583 24.6875 7.1875C26.1458 5.72917 27.9167 5 30 5C32.0833 5 33.8542 5.72917 35.3125 7.1875C36.7708 8.64583 37.5 10.4167 37.5 12.5V27.5C37.5 29.5833 36.7708 31.3542 35.3125 32.8125C33.8542 34.2708 32.0833 35 30 35ZM27.5 52.5V44.8125C23.1667 44.2292 19.5833 42.2917 16.75 39C13.9167 35.7083 12.5 31.875 12.5 27.5H17.5C17.5 30.9583 18.7188 33.9062 21.1562 36.3438C23.5938 38.7812 26.5417 40 30 40C33.4583 40 36.4062 38.7812 38.8438 36.3438C41.2813 33.9062 42.5 30.9583 42.5 27.5H47.5C47.5 31.875 46.0833 35.7083 43.25 39C40.4167 42.2917 36.8333 44.2292 32.5 44.8125V52.5H27.5Z"
-        fill="#19587E"
+        d="M3 8.5A2 2 0 0 1 5 6.5h2.2l1.5-2.2h6.6l1.5 2.2H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"
+        fill="currentColor"
+        fillOpacity="0.15"
+      />
+      <circle cx="11.5" cy="12.8" r="3.3" />
+      <path d="m13.9 15.2 2.3 2.3" />
+    </LineIcon>
+  );
+}
+
+/** Звезда продвижения заказа и оценки: скруглённые лучи, как у знака логотипа. */
+export function StarIcon({ className, filled = true }: IconProps & { filled?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className}>
+      <path
+        d="M11.1 2.9a1 1 0 0 1 1.8 0l2.3 4.8 5.2.7a1 1 0 0 1 .6 1.7l-3.8 3.7.9 5.2a1 1 0 0 1-1.5 1l-4.6-2.4-4.6 2.4a1 1 0 0 1-1.5-1l.9-5.2-3.8-3.7a1 1 0 0 1 .6-1.7l5.2-.7Z"
+        fill={filled ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth={filled ? 0 : 1.8}
+        strokeLinejoin="round"
       />
     </svg>
   );
 }
 
-/** Камера с закрашенным объективом и точкой в правом нижнем углу, как в макете. */
-export function CameraIcon({ className }: IconProps) {
+export function CheckIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 60 60" fill="none" overflow="visible" aria-hidden className={className}>
-      <path
-        d="M57.5 47.5C57.5 48.8261 56.9732 50.0979 56.0355 51.0355C55.0979 51.9732 53.8261 52.5 52.5 52.5H7.5C6.17392 52.5 4.90215 51.9732 3.96447 51.0355C3.02678 50.0979 2.5 48.8261 2.5 47.5V20C2.5 18.6739 3.02678 17.4021 3.96447 16.4645C4.90215 15.5268 6.17392 15 7.5 15H17.5L22.5 7.5H37.5L42.5 15H52.5C53.8261 15 55.0979 15.5268 56.0355 16.4645C56.9732 17.4021 57.5 18.6739 57.5 20V47.5Z"
-        fill="#DADADA"
-        stroke="#19587E"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M30 42.5C35.5228 42.5 40 38.0228 40 32.5C40 26.9772 35.5228 22.5 30 22.5C24.4772 22.5 20 26.9772 20 32.5C20 38.0228 24.4772 42.5 30 42.5Z"
-        fill="#DADADA"
-        stroke="#19587E"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="30" cy="34" r="10" fill="#19587E" />
-      <circle cx="58" cy="60" r="25" fill="#DADADA" />
-      <circle cx="52.5" cy="52.5" r="7.5" fill="#19587E" />
-    </svg>
+    <LineIcon className={className}>
+      <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </LineIcon>
+  );
+}
+
+// Иконки разделов каталога на главной.
+
+export function BearingIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3.5" />
+      {[0, 60, 120, 180, 240, 300].map((a) => (
+        <circle
+          key={a}
+          cx={12 + 6.25 * Math.cos((a * Math.PI) / 180)}
+          cy={12 + 6.25 * Math.sin((a * Math.PI) / 180)}
+          r="1.1"
+          fill="currentColor"
+          stroke="none"
+        />
+      ))}
+    </LineIcon>
+  );
+}
+
+export function SealIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
+      <ellipse cx="12" cy="9" rx="9" ry="4.5" />
+      <path d="M3 9v5c0 2.5 4 4.5 9 4.5s9-2 9-4.5V9" />
+      <ellipse cx="12" cy="9" rx="4" ry="2" />
+    </LineIcon>
+  );
+}
+
+export function BeltIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
+      <circle cx="6.5" cy="12" r="3.5" />
+      <circle cx="18" cy="12" r="2.5" />
+      <path d="M6.5 8.5 18 9.5M6.5 15.5 18 14.5" />
+      <circle cx="6.5" cy="12" r="0.8" fill="currentColor" />
+    </LineIcon>
+  );
+}
+
+export function HydraulicsIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
+      <rect x="2.5" y="8.5" width="12" height="7" rx="1.5" />
+      <path d="M14.5 12h7M8.5 8.5V6M5 6h7" />
+      <path d="M18.5 16.5c0 1-.8 1.8-1.7 1.8s-1.8-.8-1.8-1.8c0-1.2 1.8-3 1.8-3s1.7 1.8 1.7 3Z" />
+    </LineIcon>
+  );
+}
+
+export function GearIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" />
+      <circle cx="12" cy="12" r="6.5" />
+    </LineIcon>
+  );
+}
+
+export function WheatIcon({ className }: IconProps) {
+  return (
+    <LineIcon className={className}>
+      <path d="M12 21.5V8" />
+      <path d="M12 8c-2-.5-3.2-2-3.2-4.2C10.8 4.2 12 5.8 12 8Zm0 0c2-.5 3.2-2 3.2-4.2C13.2 4.2 12 5.8 12 8Z" />
+      <path d="M12 13c-2.3-.4-3.8-2-3.8-4.4 2.3.3 3.8 2 3.8 4.4Zm0 0c2.3-.4 3.8-2 3.8-4.4-2.3.3-3.8 2-3.8 4.4Z" />
+      <path d="M12 18c-2.3-.4-3.8-2-3.8-4.4 2.3.3 3.8 2 3.8 4.4Zm0 0c2.3-.4 3.8-2 3.8-4.4-2.3.3-3.8 2-3.8 4.4Z" />
+    </LineIcon>
   );
 }
 

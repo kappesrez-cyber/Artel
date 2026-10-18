@@ -1,7 +1,8 @@
 import "server-only";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/server/db";
-import { parseQuery, requiredMatches, stem, type ParsedQuery } from "./search-text";
+import { plans } from "@/server/plans/plans";
+import { parseQuery, queryScope, requiredMatches, stem, type ParsedQuery } from "./search-text";
 
 /**
  * Поиск покупателя по каталогу. Всё считает PostgreSQL, без внешних сервисов:
@@ -20,11 +21,11 @@ import { parseQuery, requiredMatches, stem, type ParsedQuery } from "./search-te
  *    не нашлось ничего, показываем позиции, где совпала хотя бы часть слов.
  * 5. Порядок: сколько слов совпало, совпадение артикула, слова в названии, вес полей
  *    (название и артикулы важнее описания), и только потом репутация продавца: рейтинг,
- *    успешные сделки, проверенные реквизиты, свежесть карточки.
+ *    успешные сделки, проверенные реквизиты, свежесть карточки и тариф (Pro, Max, Ultra).
  */
 
 export type SearchMode =
-  /** Пустой запрос: все предложения, сначала надёжные продавцы. */
+  /** Пустой запрос: все предложения, сначала надёжные продавцы. Запрос из одних знаков («...») — не пустой. */
   | "all"
   /** Совпали все нужные слова. */
   | "exact"
@@ -42,12 +43,22 @@ export type SearchOutcome = {
   corrections: Record<string, string[]>;
 };
 
-/** Репутация продавца и свежесть карточки, 0…1. Влияет на порядок, но не на попадание в выдачу. */
+/** Прибавка от действующего тарифа продавца (`searchBoost` в `plans.ts`). */
+const planBoost = Prisma.sql`(CASE WHEN o."planUntil" > now() THEN CASE o.plan::text ${Prisma.join(
+  plans.map((plan) => Prisma.sql`WHEN ${plan.tier} THEN ${plan.searchBoost}::float`),
+  " ",
+)} ELSE 0 END ELSE 0 END)`;
+
+/**
+ * Репутация продавца и свежесть карточки (0…1) плюс прибавка тарифа (до 0.5).
+ * Влияет на порядок, но не на попадание в выдачу.
+ */
 const quality = Prisma.sql`(
   0.35 * coalesce(rv.rating, 0) / 5 * least(coalesce(rv.reviews, 0), 5) / 5
   + 0.25 * least(ln(1 + coalesce(dl.deals, 0)) / ln(21), 1)
   + 0.2 * (o."verifiedAt" IS NOT NULL)::int
   + 0.2 * (p."updatedAt" > now() - interval '90 days')::int
+  + ${planBoost}
 )`;
 
 const joins = Prisma.sql`
@@ -65,7 +76,9 @@ type Row = { id: string; matched: number; corrected: number };
 
 export async function rankProducts(query: string, limit: number): Promise<SearchOutcome> {
   const parsed = parseQuery(query);
-  if (parsed.terms.length === 0 && parsed.codes.length === 0) {
+  const scope = queryScope(query, parsed);
+  if (scope === "none") return { mode: "exact", ids: [], parsed, corrections: {} };
+  if (scope === "all") {
     const rows = await db().$queryRaw<{ id: string }[]>`
       SELECT p.id FROM "Product" p ${joins}
       WHERE p.status = 'PUBLISHED'

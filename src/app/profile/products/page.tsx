@@ -12,7 +12,7 @@ import { Badge, Card, Empty, PageFallback, Section } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Мой каталог" };
 
-const statusTone = { DRAFT: "amber", PUBLISHED: "green", ARCHIVED: "gray" } as const;
+const statusTone = { DRAFT: "outline", PUBLISHED: "solid", ARCHIVED: "gray" } as const;
 
 async function Products() {
   const { organization } = await requireOrganizationUser("/profile/products");

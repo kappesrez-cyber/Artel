@@ -1,5 +1,5 @@
 import "server-only";
-import { normalize } from "@/server/catalog/search-text";
+import { normalize, queryScope } from "@/server/catalog/search-text";
 import { db } from "@/server/db";
 
 /**
@@ -16,8 +16,9 @@ export async function recordSearch(
   items: Shown[],
   viewerOrganizationId: string | null,
 ): Promise<void> {
+  // Пустой запрос и запрос без слов («...», «для») — не спрос, в аналитику не пишем.
+  if (queryScope(query) !== "search") return;
   const normalized = normalize(query);
-  if (!normalized) return;
   try {
     const search = await db().searchQuery.create({
       data: {

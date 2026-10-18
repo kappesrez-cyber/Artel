@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { plural } from "@/components/labels";
 import { orderHref, productHref, routes } from "@/components/navigation";
-import { Card, Empty, PageFallback, Section, StarCount } from "@/components/ui";
+import { Card, Empty, PageFallback, Section, StarAmount, StarCount } from "@/components/ui";
 import {
   getBuyerAnalytics,
   getMarketAnalytics,
@@ -79,12 +79,12 @@ function Kpi({
   value: ReactNode;
   current?: number;
   previous?: number;
-  hint?: string;
+  hint?: ReactNode;
 }) {
   const change =
     current === undefined || previous === undefined ? null : changePercent(current, previous);
   return (
-    <div className="flex flex-col gap-1 rounded-3xl bg-gray-50 p-5">
+    <div className="from-brand/[0.07] ring-brand/10 flex flex-col gap-1 rounded-3xl bg-linear-to-br to-white p-5 ring-1">
       <span className="text-gray-500">{label}</span>
       <span className="text-brand-dark text-2xl font-extrabold break-words 2xl:text-3xl">
         {value}
@@ -169,7 +169,7 @@ function SellerBlock({ data, period }: { data: SellerAnalytics; period: PeriodDa
         </Card>
       </Section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Section title="Воронка сделок">
           <Card className="flex flex-col gap-3">
             {funnel.map(([label, value], i) => {
@@ -239,7 +239,7 @@ function SellerBlock({ data, period }: { data: SellerAnalytics; period: PeriodDa
             </Link>
           </Empty>
         ) : (
-          <div className="overflow-x-auto rounded-3xl border-2 border-gray-200">
+          <div className="relative overflow-x-auto rounded-3xl border-2 border-gray-200">
             <table className="w-full min-w-[640px] text-left">
               <thead className="bg-gray-50 text-sm text-gray-500">
                 <tr>
@@ -282,7 +282,7 @@ function SellerBlock({ data, period }: { data: SellerAnalytics; period: PeriodDa
       </Section>
 
       <Section title="Репутация">
-        <Card className="grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
+        <Card className="grid grid-cols-1 gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
           <div className="flex flex-col gap-1">
             <span className="text-brand-dark text-5xl font-extrabold">
               {data.reputation.average ?? "—"}
@@ -294,14 +294,15 @@ function SellerBlock({ data, period }: { data: SellerAnalytics; period: PeriodDa
             </span>
             {data.reputation.periodReviews > 0 && (
               <span className="text-sm text-gray-500">
-                за период: {data.reputation.periodAverage} ★, {data.reputation.periodReviews} нов.
+                за период: <StarAmount value={data.reputation.periodAverage} />,{" "}
+                {data.reputation.periodReviews} нов.
               </span>
             )}
           </div>
           <div className="flex flex-col gap-2">
             {[5, 4, 3, 2, 1].map((stars) => (
               <div key={stars} className="grid grid-cols-[3rem_1fr_2rem] items-center gap-3">
-                <span className="text-sm font-bold whitespace-nowrap text-gray-600">{stars} ★</span>
+                <StarAmount value={stars} className="text-sm font-bold text-gray-600" />
                 <Bar value={data.reputation.histogram[stars - 1]!} max={ratingMax} />
                 <span className="text-right text-sm tabular-nums">
                   {data.reputation.histogram[stars - 1]}
@@ -344,8 +345,16 @@ function BuyerBlock({ data }: { data: BuyerAnalytics }) {
         />
         <Kpi
           label="Звёзды"
-          value={`${data.starBalance} ★`}
-          hint={data.starsInvested ? `вложено за период: ${data.starsInvested} ★` : "на счету"}
+          value={<StarAmount value={data.starBalance} />}
+          hint={
+            data.starsInvested ? (
+              <>
+                вложено за период: <StarAmount value={data.starsInvested} />
+              </>
+            ) : (
+              "на счету"
+            )
+          }
         />
       </div>
     </Section>
@@ -356,7 +365,7 @@ function MarketBlock({ data, isSeller }: { data: MarketAnalytics; isSeller: bool
   const unmetMax = Math.max(1, ...data.unmet.map((u) => u.n));
   const share = percent(data.emptySearches, data.searches);
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Section title="Чего не находят в поиске">
         <Card className="flex flex-col gap-3">
           <p className="text-gray-600">
@@ -385,7 +394,7 @@ function MarketBlock({ data, isSeller }: { data: MarketAnalytics; isSeller: bool
         <Card className="flex flex-col gap-3">
           <p className="text-gray-600">
             Открыто {plural(data.openOrders, "заказ", "заказа", "заказов")}, в них вложено{" "}
-            {data.openOrderStars} ★.
+            <StarAmount value={data.openOrderStars} />.
           </p>
           {data.topOrders.length === 0 ? (
             <p className="text-gray-500">Других открытых заказов нет.</p>

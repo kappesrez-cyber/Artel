@@ -86,7 +86,7 @@ async function Orders({ searchParams }: Pick<PageProps<"/market">, "searchParams
           </Empty>
         </div>
       ) : (
-        <ul className="mt-[calc(var(--u)*30)] grid gap-x-[calc(var(--u)*75)] gap-y-[calc(var(--u)*50)] max-md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-[calc(var(--u)*30)] grid grid-cols-1 gap-x-[calc(var(--u)*75)] gap-y-[calc(var(--u)*50)] max-md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {orders.map((order) => (
             <li key={order.id}>
               <OrderCard order={order} />

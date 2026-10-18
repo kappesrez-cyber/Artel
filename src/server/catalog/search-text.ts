@@ -222,6 +222,19 @@ export function parseQuery(query: string): ParsedQuery {
   return { normalized, terms, codes };
 }
 
+/**
+ * Что показывать по запросу. Пустая строка — всё подряд. Запрос, в котором после разбора
+ * не осталось ни слова, ни артикула («...», «?!», «- -», «для»), — ничего: раньше он
+ * считался пустым, и на точки выдавался весь каталог.
+ */
+export function queryScope(
+  query: string,
+  parsed: ParsedQuery = parseQuery(query),
+): "all" | "none" | "search" {
+  if (query.trim() === "") return "all";
+  return parsed.terms.length === 0 && parsed.codes.length === 0 ? "none" : "search";
+}
+
 /** Основы смысловых слов запроса — для простого поиска по подстроке (рынок заказов). */
 export function searchTerms(query: string): string[] {
   return [...new Set(parseQuery(query).terms.map((t) => stem(t.word)))];

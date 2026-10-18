@@ -27,7 +27,7 @@ async function Checkout({ params, searchParams }: PageProps<"/stars/checkout/[id
 
   return (
     <Card className="flex flex-col gap-5">
-      <p className="rounded-2xl bg-amber-50 px-4 py-3 text-amber-800">
+      <p className="bg-brand-gray/50 rounded-2xl px-4 py-3 text-gray-800">
         Тестовая оплата: деньги не списываются. Когда подключим платёжную систему, здесь будет её
         страница.
       </p>

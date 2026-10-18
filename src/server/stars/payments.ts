@@ -2,7 +2,7 @@ import "server-only";
 import { env } from "@/server/env";
 
 /**
- * Платёжный провайдер для покупки звёзд.
+ * Платёжный провайдер для покупки звёзд и оплаты тарифов.
  *
  * Сейчас подключена только заглушка `stub`: она «проводит» оплату на тестовой странице
  * `/stars/checkout/{id}` без настоящих денег. Чтобы подключить настоящий приём платежей
@@ -17,6 +17,8 @@ export interface PaymentProvider {
   readonly name: string;
   /** Создать платёж. `returnUrl` — куда провайдер вернёт покупателя после оплаты. */
   createPayment(payment: {
+    /** Что оплачивается: пакет звёзд (`StarPurchase`) или месяц тарифа (`PlanPurchase`). */
+    kind: "stars" | "plan";
     purchaseId: string;
     /** Сумма в рублях, строкой с копейками: «450.00». */
     amount: string;
@@ -30,8 +32,8 @@ export interface PaymentProvider {
 const stub: PaymentProvider = {
   name: "stub",
   allowsManualConfirmation: true,
-  async createPayment({ purchaseId, returnUrl }) {
-    const url = `/stars/checkout/${encodeURIComponent(purchaseId)}?next=${encodeURIComponent(returnUrl)}`;
+  async createPayment({ kind, purchaseId, returnUrl }) {
+    const url = `/${kind === "plan" ? "plans" : "stars"}/checkout/${encodeURIComponent(purchaseId)}?next=${encodeURIComponent(returnUrl)}`;
     return { paymentId: `stub_${purchaseId}`, confirmationUrl: url };
   },
 };

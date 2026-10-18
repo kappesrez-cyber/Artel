@@ -14,7 +14,7 @@ export function DocumentForm() {
   return (
     <form action={action} className="flex flex-col gap-4" key={state.ok ? state.message : "form"}>
       <FormMessage state={state} />
-      <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_2fr]">
         <Select
           label="Тип"
           name="kind"
@@ -31,7 +31,7 @@ export function DocumentForm() {
           state={state}
         />
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field label="Номер" name="number" defaultValue={v.number} state={state} />
         <Field
           label="Дата выдачи"

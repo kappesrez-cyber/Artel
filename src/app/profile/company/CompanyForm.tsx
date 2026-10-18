@@ -36,7 +36,7 @@ export function CompanyForm({ initial }: { initial: CompanyValues }) {
         defaultValue={v.description}
         state={state}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="ИНН" name="inn" inputMode="numeric" defaultValue={v.inn} state={state} />
         <Field
           label="ОГРН / ОГРНИП"
@@ -60,7 +60,7 @@ export function CompanyForm({ initial }: { initial: CompanyValues }) {
         defaultValue={v.legalAddress}
         state={state}
       />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field label="Телефон" name="phone" type="tel" defaultValue={v.phone} state={state} />
         <Field
           label="Email для заказов"

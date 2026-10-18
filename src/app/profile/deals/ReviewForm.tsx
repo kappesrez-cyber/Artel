@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { FormMessage, SubmitButton, TextArea } from "@/components/form";
 import { initialFormState } from "@/components/form-state";
+import { StarIcon } from "@/components/icons";
 import { reviewDeal } from "../actions";
 
 export function ReviewForm({ dealId, counterpart }: { dealId: string; counterpart: string }) {
@@ -19,7 +20,7 @@ export function ReviewForm({ dealId, counterpart }: { dealId: string; counterpar
             // Порядок обратный (5…1), поэтому «звёзды левее выбранной» — следующие соседи в DOM.
             <label
               key={n}
-              className="cursor-pointer [&:has(:checked)~label>span]:text-amber-500 [&:hover~label>span]:text-amber-400"
+              className="[&:has(:checked)~label>span]:text-brand [&:hover~label>span]:text-brand/70 cursor-pointer"
             >
               <input
                 type="radio"
@@ -30,8 +31,8 @@ export function ReviewForm({ dealId, counterpart }: { dealId: string; counterpar
                 className="peer sr-only"
                 aria-label={`${n} из 5`}
               />
-              <span className="text-gray-300 transition-colors peer-checked:text-amber-500 peer-focus-visible:outline-2 hover:text-amber-400">
-                ★
+              <span className="text-brand-gray peer-checked:text-brand hover:text-brand/70 block transition-colors peer-focus-visible:outline-2">
+                <StarIcon className="size-[1em]" />
               </span>
             </label>
           ))}

@@ -48,6 +48,10 @@ model Organization {
   orders          Order[]
   orderBoosts     OrderBoost[]
   starPurchases   StarPurchase[]
+  /// Тариф (`src/server/plans/plans.ts`). Действует до `planUntil`, после — Free.
+  plan            PlanTier               @default(FREE)
+  planUntil       DateTime?
+  planPurchases   PlanPurchase[]
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 }
@@ -143,27 +147,30 @@ enum DealStatus {
 
 /// Сделка между двумя предприятиями, обычно по позиции каталога.
 model Deal {
-  id              String       @id @default(cuid())
-  sellerId        String
-  seller          Organization @relation("DealSeller", fields: [sellerId], references: [id], onDelete: Cascade)
-  buyerId         String
-  buyer           Organization @relation("DealBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
-  productId       String?
-  product         Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  id                    String       @id @default(cuid())
+  sellerId              String
+  seller                Organization @relation("DealSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyerId               String
+  buyer                 Organization @relation("DealBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  productId             String?
+  product               Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
   /// Название на момент сделки: позицию могут переименовать или удалить.
-  title           String
-  quantity        Int          @default(1)
+  title                 String
+  quantity              Int          @default(1)
   /// Цена за единицу на момент сделки, в рублях.
-  unitPrice       Decimal?     @db.Decimal(14, 2)
-  comment         String?
-  status          DealStatus   @default(REQUESTED)
-  createdByUserId String?
-  acceptedAt      DateTime?
-  completedAt     DateTime?
-  cancelledAt     DateTime?
-  reviews         Review[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  unitPrice             Decimal?     @db.Decimal(14, 2)
+  comment               String?
+  status                DealStatus   @default(REQUESTED)
+  createdByUserId       String?
+  acceptedAt            DateTime?
+  completedAt           DateTime?
+  cancelledAt           DateTime?
+  /// Предприятие на тарифе Ultra попросило помочь с документами по сделке.
+  docsHelpRequestedAt   DateTime?
+  docsHelpRequestedById String?
+  reviews               Review[]
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
   @@index([sellerId, status])
   @@index([buyerId, status])
@@ -413,6 +420,32 @@ model StarPurchase {
   amount            Decimal            @db.Decimal(14, 2)
   provider          String
   /// Номер платежа у провайдера.
+  providerPaymentId String?            @unique
+  status            StarPurchaseStatus @default(PENDING)
+  paidAt            DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([organizationId, createdAt])
+}
+
+enum PlanTier {
+  FREE
+  PRO
+  MAX
+  ULTRA
+}
+
+/// Оплата месяца тарифа. Тот же провайдер и та же тестовая заглушка, что у звёзд.
+model PlanPurchase {
+  id                String             @id @default(cuid())
+  organizationId    String
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId            String?
+  plan              PlanTier
+  /// Сумма к оплате в рублях.
+  amount            Decimal            @db.Decimal(14, 2)
+  provider          String
   providerPaymentId String?            @unique
   status            StarPurchaseStatus @default(PENDING)
   paidAt            DateTime?

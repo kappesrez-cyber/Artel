@@ -2,6 +2,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { reindexOrganizationProducts } from "@/server/catalog/products";
 import { db } from "@/server/db";
+import { effectiveTier, getPlan } from "@/server/plans/plans";
 import { NotFoundError } from "@/server/errors";
 import { organizationInputSchema, organizationUpdateSchema } from "./schemas";
 
@@ -99,6 +100,8 @@ export async function getPublicProfile(id: string) {
     where: { id },
     select: {
       ...organizationSelect,
+      plan: true,
+      planUntil: true,
       documents: {
         where: { isPublic: true },
         orderBy: [{ kind: "asc" }, { createdAt: "desc" }],
@@ -128,5 +131,7 @@ export async function getPublicProfile(id: string) {
   });
   if (!organization) return null;
   const stats = await getOrganizationStats(id);
-  return { ...organization, stats };
+  const { plan, planUntil, ...rest } = organization;
+  // Наружу только действующий тариф, без даты окончания.
+  return { ...rest, plan: getPlan(effectiveTier({ plan, planUntil })), stats };
 }

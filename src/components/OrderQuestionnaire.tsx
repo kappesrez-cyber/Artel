@@ -109,7 +109,7 @@ export function ReplacementQuestions({
         title="Что заменяем?"
         hint="Бренд и артикул оригинала: по ним производитель быстрее всего найдёт аналог"
       >
-        <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_2fr]">
           <Field
             label="Бренд"
             name="originalBrand"

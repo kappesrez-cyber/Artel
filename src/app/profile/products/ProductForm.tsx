@@ -41,7 +41,7 @@ export function ProductForm({
         defaultValue={v.name}
         state={state}
       />
-      <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_2fr]">
         <Field
           label="Артикул"
           name="article"
@@ -65,7 +65,7 @@ export function ProductForm({
         defaultValue={v.description}
         state={state}
       />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field
           label="Цена за единицу, ₽"
           name="price"

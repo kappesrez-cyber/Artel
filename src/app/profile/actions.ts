@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import type { FormState } from "@/components/form-state";
 import { requireOrganizationUser } from "@/server/auth/access";
 import { createProduct, updateProduct } from "@/server/catalog/products";
-import { changeDealStatus, leaveReview } from "@/server/deals/deals";
+import { changeDealStatus, leaveReview, requestDocsHelp } from "@/server/deals/deals";
 import type { DealAction } from "@/server/deals/transitions";
 import { checkbox, formFields, toFormState } from "@/server/forms";
 import {
@@ -101,6 +101,18 @@ export async function dealAction(dealId: string, action: DealAction): Promise<Fo
   const user = await requireOrganizationUser();
   try {
     await changeDealStatus(user.organization.id, dealId, action);
+  } catch (error) {
+    return toFormState(error);
+  }
+  refresh();
+  return { ok: true };
+}
+
+/** Тариф Ultra: юрист платформы готовит документы по сделке. */
+export async function requestDealDocs(dealId: string): Promise<FormState> {
+  const user = await requireOrganizationUser();
+  try {
+    await requestDocsHelp(user.organization.id, user.id, dealId);
   } catch (error) {
     return toFormState(error);
   }
