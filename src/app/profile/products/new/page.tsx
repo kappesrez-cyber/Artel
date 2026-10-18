@@ -17,6 +17,8 @@ async function NewProduct() {
           productId={null}
           initial={{
             name: "",
+            article: "",
+            analogs: "",
             description: "",
             price: "",
             leadTimeDays: "",

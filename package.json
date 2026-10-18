@@ -10,7 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --exclude 'src/**/*.db.test.ts'",
     "test:watch": "vitest",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm test",
     "postinstall": "prisma generate",
@@ -22,7 +22,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "vercel-build": "prisma migrate deploy && prisma db seed && next build"
+    "vercel-build": "prisma migrate deploy && prisma db seed && next build",
+    "test:db": "vitest run src/server/catalog/search.db.test.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",

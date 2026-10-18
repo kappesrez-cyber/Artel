@@ -15,7 +15,7 @@ import { productStatusLabels } from "@/components/labels";
 import { saveProduct } from "../actions";
 
 export type ProductValues = Record<
-  "name" | "description" | "price" | "leadTimeDays" | "city" | "status",
+  "name" | "article" | "analogs" | "description" | "price" | "leadTimeDays" | "city" | "status",
   string
 >;
 
@@ -41,10 +41,27 @@ export function ProductForm({
         defaultValue={v.name}
         state={state}
       />
+      <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+        <Field
+          label="Артикул"
+          name="article"
+          placeholder="ПШ-6205-2RS"
+          defaultValue={v.article}
+          state={state}
+        />
+        <Field
+          label="Заменяет импортные позиции"
+          name="analogs"
+          placeholder="SKF 6205-2RSH, FAG 6205-2RSR"
+          hint="Бренды и артикулы через запятую: покупатели часто ищут по артикулу оригинала"
+          defaultValue={v.analogs}
+          state={state}
+        />
+      </div>
       <TextArea
         label="Описание"
         name="description"
-        placeholder="Характеристики, аналоги импортных позиций, материалы, допуски"
+        placeholder="Характеристики, материалы, допуски, где применяется"
         defaultValue={v.description}
         state={state}
       />

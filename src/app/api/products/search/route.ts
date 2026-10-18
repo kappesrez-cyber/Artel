@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
   await connection();
   try {
     const { q, limit } = searchQuerySchema.parse(Object.fromEntries(request.nextUrl.searchParams));
-    return Response.json({ query: q, items: await searchProducts(q, limit) });
+    const { items, mode, synonyms } = await searchProducts(q, limit);
+    return Response.json({ query: q, mode, synonyms, items });
   } catch (error) {
     return errorResponse(error);
   }

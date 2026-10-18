@@ -68,6 +68,8 @@ export async function saveProduct(
   const input = {
     name: values.name,
     description: values.description || null,
+    article: values.article || null,
+    analogs: values.analogs || null,
     price: values.price,
     leadTimeDays: values.leadTimeDays === "" ? undefined : Number(values.leadTimeDays),
     city: values.city,

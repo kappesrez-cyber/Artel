@@ -23,6 +23,8 @@ async function EditProduct({ params }: Pick<PageProps<"/profile/products/[id]">,
           productId={product.id}
           initial={{
             name: product.name,
+            article: product.article ?? "",
+            analogs: product.analogs ?? "",
             description: product.description ?? "",
             price: product.price.replace(/\.00$/, ""),
             leadTimeDays: String(product.leadTimeDays),
