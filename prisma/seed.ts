@@ -127,6 +127,7 @@ async function main() {
         quantity: 2,
         unitPrice: products[0].price,
         status: "COMPLETED",
+        createdAt: new Date(Date.now() - 24 * 86_400_000),
         acceptedAt: new Date(Date.now() - 20 * 86_400_000),
         completedAt: new Date(Date.now() - 10 * 86_400_000),
       },
@@ -164,11 +165,64 @@ async function main() {
 
   await seedMarket(sellerId, buyerId);
   await seedAnalytics(sellerId, seller2Id, buyerId);
+  await seedSeller2Deals(seller2Id, buyerId);
 
   console.log(
     `Сид: «${seller.organization.name}», «${seller2.organization.name}» и «${buyer.organization.name}». ` +
       `Вход: ${seller.user.email} / ${buyer.user.email} / ${seller2.user.email}, пароль ${DEMO_PASSWORD}`,
   );
+}
+
+/** Сделки второго продавца: чтобы у него тоже была репутация и выручка в аналитике. Один раз. */
+async function seedSeller2Deals(sellerId: string, buyerId: string) {
+  if ((await db().deal.count({ where: { sellerId } })) > 0) return;
+  const products = await db().product.findMany({
+    where: { organizationId: sellerId, status: "PUBLISHED" },
+    select: { id: true, name: true, price: true },
+    orderBy: { name: "asc" },
+  });
+  const day = 86_400_000;
+  const plan = [
+    {
+      quantity: 400,
+      daysAgo: 27,
+      rating: 5,
+      text: "Сравнили с импортным оригиналом — не хуже, документы в порядке.",
+    },
+    { quantity: 30, daysAgo: 16, rating: 4, text: "Хорошее качество, отгрузили на два дня позже." },
+    { quantity: 1500, daysAgo: 6, rating: null, text: null },
+  ];
+  for (const [i, step] of plan.entries()) {
+    const product = products[i % products.length];
+    if (!product) return;
+    const createdAt = new Date(Date.now() - step.daysAgo * day);
+    const done = step.rating !== null;
+    const deal = await db().deal.create({
+      data: {
+        sellerId,
+        buyerId,
+        productId: product.id,
+        title: product.name,
+        quantity: step.quantity,
+        unitPrice: product.price,
+        status: done ? "COMPLETED" : "ACCEPTED",
+        createdAt,
+        acceptedAt: new Date(createdAt.getTime() + day),
+        completedAt: done ? new Date(createdAt.getTime() + 5 * day) : null,
+      },
+    });
+    if (done) {
+      await db().review.create({
+        data: {
+          dealId: deal.id,
+          authorOrganizationId: buyerId,
+          targetOrganizationId: sellerId,
+          rating: step.rating!,
+          text: step.text!,
+        },
+      });
+    }
+  }
 }
 
 /** Позиции предприятия по названию: новые создаём, существующие обновляем. */
