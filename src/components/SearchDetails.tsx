@@ -129,7 +129,7 @@ export function SearchDetails({
       inert={!open}
       className="group mt-[calc(var(--u)*24)] grid -translate-y-4 scale-[0.98] grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity,translate,scale] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] data-open:translate-y-0 data-open:scale-100 data-open:grid-rows-[1fr] data-open:opacity-100 motion-reduce:transition-none max-md:mt-3"
     >
-      <div className="min-h-0 overflow-clip rounded-[calc(var(--u)*50)] bg-white shadow-[0_24px_80px_-20px_rgba(25,88,126,0.35)] ring-1 ring-black/5 max-md:rounded-3xl">
+      <div className="min-h-0 overflow-clip rounded-[calc(var(--u)*50)] bg-white shadow-[0_24px_80px_-20px_rgba(23,55,128,0.35)] ring-1 ring-black/5 max-md:rounded-3xl">
         <form
           ref={formRef}
           action={action}
