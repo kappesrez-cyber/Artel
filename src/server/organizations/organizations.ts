@@ -21,6 +21,7 @@ const organizationSelect = {
   isSeller: true,
   isBuyer: true,
   verifiedAt: true,
+  logo: { select: { updatedAt: true } },
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.OrganizationSelect;

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { AssessmentPanel, VerdictBadge } from "@/components/Assessment";
+import { CompanyLogo } from "@/components/CompanyLogo";
 import { documentKindLabels, plural } from "@/components/labels";
 import { ProductCard } from "@/components/ProductCard";
 import { ReviewList } from "@/components/ReviewList";
@@ -16,6 +18,7 @@ import {
   Stars,
   StatTile,
 } from "@/components/ui";
+import { getAssessment } from "@/server/assessment/assessment";
 import { formatDate } from "@/server/catalog/format";
 import { listPublishedOrganizationProducts } from "@/server/catalog/products";
 import { getPublicProfile } from "@/server/organizations/organizations";
@@ -30,6 +33,7 @@ async function Company({ params }: Pick<PageProps<"/companies/[id]">, "params">)
     listPublishedOrganizationProducts(id),
   ]);
   if (!company) notFound();
+  const assessment = await getAssessment(id);
   const { stats } = company;
   const now = new Date();
 
@@ -46,10 +50,14 @@ async function Company({ params }: Pick<PageProps<"/companies/[id]">, "params">)
   return (
     <div className="flex flex-col gap-10">
       <header className="flex flex-col gap-3">
-        <h1 className="font-display text-brand-dark text-3xl leading-tight md:text-5xl">
-          {company.name}
-        </h1>
+        <div className="flex items-center gap-4 md:gap-6">
+          <CompanyLogo organization={company} className="size-16 text-2xl md:size-24 md:text-4xl" />
+          <h1 className="font-display text-brand-dark min-w-0 text-3xl leading-tight md:text-5xl">
+            {company.name}
+          </h1>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
+          <VerdictBadge verdict={assessment.verdict} tone={assessment.tone} />
           <RoleBadges isSeller={company.isSeller} isBuyer={company.isBuyer} />
           {company.verifiedAt && <Badge tone="solid">Реквизиты проверены</Badge>}
           {company.plan.price > 0 && <Badge tone="outline">Тариф {company.plan.name}</Badge>}
@@ -60,6 +68,10 @@ async function Company({ params }: Pick<PageProps<"/companies/[id]">, "params">)
           </p>
         )}
       </header>
+
+      <div id="ai-summary" className="scroll-mt-6">
+        <AssessmentPanel assessment={assessment} name={company.name} />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile label="Успешных сделок на Artel" value={stats.successfulDeals} />

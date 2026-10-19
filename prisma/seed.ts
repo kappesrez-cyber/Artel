@@ -7,7 +7,16 @@ import { db } from "@/server/db";
 import { createOrder } from "@/server/orders/orders";
 import { createOrganization, updateOrganization } from "@/server/organizations/organizations";
 import { boostOrder } from "@/server/stars/stars";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { refreshAssessment } from "@/server/assessment/assessment";
 import { obnalProducts, techmashProducts, type DemoProduct } from "./demo-catalog";
+import {
+  demoCompanies,
+  demoCustomers,
+  existingCompanyChecks,
+  type DemoCompany,
+} from "./demo-companies";
 
 /** Пароль обоих демо-аккаунтов. Данные демонстрационные, секрета в них нет. */
 const DEMO_PASSWORD = "artel-demo";
@@ -171,11 +180,138 @@ async function main() {
   await seedMarket(sellerId, buyerId);
   await seedAnalytics(sellerId, seller2Id, buyerId);
   await seedSeller2Deals(seller2Id, buyerId);
+  await seedDemoCompanies(buyerId);
 
   console.log(
     `Сид: «${seller.organization.name}», «${seller2.organization.name}» и «${buyer.organization.name}». ` +
       `Вход: ${seller.user.email} / ${buyer.user.email} / ${seller2.user.email}, пароль ${DEMO_PASSWORD}`,
   );
+}
+
+/**
+ * Демо-производители с разной репутацией, их логотипы и ИИ-сводки. Предприятия и позиции
+ * обновляются при каждом запуске, история сделок и документы создаются один раз.
+ */
+async function seedDemoCompanies(buyerId: string) {
+  const customerIds = [buyerId];
+  for (const customer of demoCustomers) {
+    const found = await db().organization.findUnique({ where: { inn: customer.inn } });
+    customerIds.push(
+      found?.id ?? (await createOrganization({ ...customer, isSeller: false, isBuyer: true })).id,
+    );
+  }
+
+  const companies: { id: string; logo: string; company: Partial<DemoCompany> }[] = [];
+  for (const company of demoCompanies) {
+    const found = await db().organization.findUnique({ where: { inn: company.organization.inn } });
+    const id = found
+      ? (await updateOrganization(found.id, company.organization)).id
+      : (await createOrganization(company.organization)).id;
+    await ensureProducts(id, company.products);
+    companies.push({ id, logo: company.logo, company });
+  }
+  for (const [name, extra] of Object.entries(existingCompanyChecks)) {
+    const found = await db().organization.findFirst({ where: { name }, select: { id: true } });
+    if (!found) continue;
+    if (extra.foundedYear) {
+      await db().organization.update({
+        where: { id: found.id },
+        data: { foundedYear: extra.foundedYear },
+      });
+    }
+    companies.push({ id: found.id, logo: extra.logo, company: extra });
+  }
+
+  for (const { id, logo, company } of companies) {
+    if (company.verified) {
+      await db().organization.updateMany({
+        where: { id, verifiedAt: null },
+        data: { verifiedAt: new Date("2026-09-01") },
+      });
+    }
+    if (company.documents?.length) {
+      const existing = await db().organizationDocument.findMany({
+        where: { organizationId: id },
+        select: { title: true },
+      });
+      const titles = new Set(existing.map((d) => d.title));
+      await db().organizationDocument.createMany({
+        data: company.documents
+          .filter((doc) => !titles.has(doc.title))
+          .map((doc) => ({ ...doc, organizationId: id, issuedAt: new Date(doc.issuedAt) })),
+      });
+    }
+    if (company.reputation) await seedReputation(id, customerIds, company.reputation);
+    const data = readFileSync(join(import.meta.dirname, "demo-logos", logo));
+    await db().organizationLogo.upsert({
+      where: { organizationId: id },
+      create: { organizationId: id, mimeType: "image/png", size: data.byteLength, data },
+      update: {},
+    });
+    await refreshAssessment(id, company.external ?? {});
+  }
+  // Остальным — сводка только по данным платформы.
+  for (const { id } of await db().organization.findMany({ select: { id: true } })) {
+    if (!companies.some((c) => c.id === id)) await refreshAssessment(id);
+  }
+}
+
+/** История сделок производителя с демо-заказчиками за последние два года. Один раз. */
+async function seedReputation(
+  sellerId: string,
+  customerIds: string[],
+  spec: NonNullable<DemoCompany["reputation"]>,
+) {
+  const customers = customerIds.slice(1);
+  if ((await db().deal.count({ where: { sellerId, buyerId: { in: customers } } })) > 0) return;
+  const products = await db().product.findMany({
+    where: { organizationId: sellerId, status: "PUBLISHED" },
+    select: { id: true, name: true, price: true },
+    orderBy: { name: "asc" },
+  });
+  if (products.length === 0) return;
+  const day = 86_400_000;
+  const total = spec.completed + spec.cancelled;
+  // Сорванные сделки равномерно среди завершённых.
+  const cancelledAt = new Set(
+    Array.from({ length: spec.cancelled }, (_, i) =>
+      Math.floor(((i + 0.5) * total) / Math.max(1, spec.cancelled)),
+    ),
+  );
+  for (let i = 0; i < total; i++) {
+    const product = products[i % products.length]!;
+    const buyerId = customers[i % customers.length]!;
+    const createdAt = new Date(Date.now() - Math.round(((total - i) / total) * 700 + 12) * day);
+    const cancelled = cancelledAt.has(i);
+    const deal = await db().deal.create({
+      data: {
+        sellerId,
+        buyerId,
+        productId: product.id,
+        title: product.name,
+        quantity: 20 + ((i * 37) % 400),
+        unitPrice: product.price,
+        status: cancelled ? "CANCELLED" : "COMPLETED",
+        createdAt,
+        acceptedAt: new Date(createdAt.getTime() + day),
+        completedAt: cancelled ? null : new Date(createdAt.getTime() + 9 * day),
+        cancelledAt: cancelled ? new Date(createdAt.getTime() + 20 * day) : null,
+      },
+    });
+    if (!cancelled) {
+      const n = i - [...cancelledAt].filter((c) => c < i).length;
+      await db().review.create({
+        data: {
+          dealId: deal.id,
+          authorOrganizationId: buyerId,
+          targetOrganizationId: sellerId,
+          rating: spec.ratings[n % spec.ratings.length]!,
+          text: spec.reviews[n % spec.reviews.length]!,
+          createdAt: new Date(createdAt.getTime() + 10 * day),
+        },
+      });
+    }
+  }
 }
 
 /** Сделки второго продавца: чтобы у него тоже была репутация и выручка в аналитике. Один раз. */

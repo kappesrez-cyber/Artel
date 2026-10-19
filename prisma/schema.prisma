@@ -52,6 +52,11 @@ model Organization {
   plan            PlanTier               @default(FREE)
   planUntil       DateTime?
   planPurchases   PlanPurchase[]
+  /// Логотип: отдельной таблицей, чтобы байты не тянулись с каждой выборкой предприятия.
+  logo            OrganizationLogo?
+  /// ИИ-сводка о надёжности (`src/server/assessment`).
+  assessment      CompanyAssessment?
+  photoSearches   PhotoSearch[]
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 }
@@ -474,4 +479,80 @@ model PlanPurchase {
   updatedAt         DateTime           @updatedAt
 
   @@index([organizationId, createdAt])
+}
+
+/// Логотип предприятия. Браузер заранее уменьшает картинку до 512 px, так что это десятки килобайт.
+/// Отдаётся по `/api/organizations/{id}/logo?v={updatedAt}`: новая версия — новый адрес.
+model OrganizationLogo {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mimeType       String
+  size           Int
+  data           Bytes
+  updatedAt      DateTime     @updatedAt
+}
+
+/// Итоговая оценка в ИИ-сводке: от неё зависит цвет плашки.
+enum AssessmentTone {
+  /// Надёжный: можно работать без лишних проверок.
+  RELIABLE
+  /// Хороший, но истории пока меньше.
+  GOOD
+  /// Есть вопросы: стоит перепроверить.
+  CAUTION
+  /// Высокий риск: перекуп, пустышка, срывы.
+  RISK
+}
+
+/// ИИ-сводка о предприятии: пункты проверки и итог в пару слов («Надёжный производитель»,
+/// «Перекуп-пустышка»). Собирается `src/server/assessment` из данных платформы и внешних проверок.
+model CompanyAssessment {
+  organizationId String         @id
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Итог в пару слов.
+  verdict        String
+  tone           AssessmentTone
+  /// Индекс доверия 0–100.
+  score          Int
+  /// Одно-два предложения: что это значит для покупателя.
+  summary        String
+  /// Пункты сводки: `{ kind: "ok" | "warn" | "bad", text, source }[]`.
+  points         Json
+  /// Результаты внешних проверок (ФНС, суды, выезд на площадку). Сохраняются при пересчёте.
+  external       Json           @default("{}")
+  generatedAt    DateTime       @default(now())
+}
+
+/// Поиск детали по фотографиям: покупатель снимает деталь с нескольких сторон, ИИ определяет,
+/// что это, и подбирает позиции каталога. Результат открывается по своему адресу `/search/photo/{id}`.
+model PhotoSearch {
+  id                   String             @id @default(cuid())
+  viewerOrganizationId String?
+  viewerOrganization   Organization?      @relation(fields: [viewerOrganizationId], references: [id], onDelete: SetNull)
+  /// Подпись покупателя, если он её добавил: «стоит в приводе жатки».
+  hint                 String?
+  /// Что распознано: `src/server/photo-search/recognize.ts`, тип `Recognition`.
+  recognition          Json
+  /// По какому запросу подбирать позиции каталога.
+  query                String
+  images               PhotoSearchImage[]
+  createdAt            DateTime           @default(now())
+
+  @@index([createdAt])
+}
+
+/// Снимок в поиске по фото, с ракурсом: спереди, сбоку, маркировка…
+model PhotoSearchImage {
+  id        String      @id @default(cuid())
+  searchId  String
+  search    PhotoSearch @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  /// Ракурс, который выбрал покупатель: `src/server/photo-search/angles.ts`.
+  angle     String
+  mimeType  String
+  size      Int
+  data      Bytes
+  position  Int
+  createdAt DateTime    @default(now())
+
+  @@index([searchId, position])
 }

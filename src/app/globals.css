@@ -113,3 +113,13 @@ body {
     transform: translate3d(0, -25%, 0);
   }
 }
+
+/* Поиск по фото: полоса «сканирования» по снимку, пока ИИ сравнивает ракурсы. */
+@keyframes scan {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(300%);
+  }
+}

@@ -19,6 +19,7 @@ export const routes = {
   myOrders: "/profile/orders",
   stars: "/profile/stars",
   plan: "/profile/plan",
+  companies: "/companies",
 } as const;
 
 /** Публичная страница предприятия. */
@@ -48,6 +49,7 @@ export function modeForPath(pathname: string): Mode {
 }
 
 export const secondaryNav = [
+  { href: routes.companies, label: "Производители" },
   { href: routes.pricing, label: "Тарифы" },
   { href: routes.about, label: "О нас" },
 ] as const;

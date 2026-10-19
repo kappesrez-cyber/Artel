@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ProductView } from "@/server/catalog/products";
 import { formatDate, formatPrice, readyDate } from "@/server/catalog/format";
+import { VerdictBadge } from "./Assessment";
+import { CompanyLogo } from "./CompanyLogo";
 import { ArrowLeftCircleIcon } from "./icons";
 import { productHref } from "./navigation";
 
@@ -17,10 +19,23 @@ export function ProductCard({ product, now }: { product: ProductView; now: Date 
       <h2 className="truncate pl-[calc(var(--u)*10)] text-[calc(var(--u)*48)] leading-[1.2] text-gray-900 max-md:text-2xl">
         {product.name}
       </h2>
-      <p className="mt-[calc(var(--u)*17)] text-[calc(var(--u)*40)] text-gray-600 max-md:mt-2 max-md:text-xl">
-        <span className="block truncate">{product.organization.name}</span>
-        <span className="block truncate">г. {product.city}</span>
-      </p>
+      <div className="mt-[calc(var(--u)*17)] flex items-center gap-[calc(var(--u)*18)] text-[calc(var(--u)*40)] text-gray-600 max-md:mt-2 max-md:gap-2 max-md:text-xl">
+        <CompanyLogo
+          organization={product.organization}
+          className="size-[calc(var(--u)*92)] text-[calc(var(--u)*34)] max-md:size-11 max-md:text-base"
+        />
+        <p className="min-w-0">
+          <span className="block truncate">{product.organization.name}</span>
+          <span className="block truncate">г. {product.city}</span>
+        </p>
+      </div>
+      {product.organization.assessment && (
+        <VerdictBadge
+          verdict={product.organization.assessment.verdict}
+          tone={product.organization.assessment.tone}
+          className="mt-[calc(var(--u)*14)] self-start px-[calc(var(--u)*18)] py-[calc(var(--u)*7)] text-[calc(var(--u)*28)] tracking-normal max-md:mt-2 max-md:px-2.5 max-md:py-1 max-md:text-sm"
+        />
+      )}
       <p className="mt-[calc(var(--u)*8)] pl-[calc(var(--u)*3)] text-[calc(var(--u)*44)] text-gray-600 max-md:text-xl">
         Срок: {formatDate(readyDate(product.leadTimeDays, now))}
       </p>

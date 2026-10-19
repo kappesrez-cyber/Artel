@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import type { FormState } from "@/components/form-state";
+import { refreshAssessment } from "@/server/assessment/assessment";
 import { requireOrganizationUser } from "@/server/auth/access";
 import { createProduct, updateProduct } from "@/server/catalog/products";
 import { changeDealStatus, leaveReview, requestDocsHelp } from "@/server/deals/deals";
@@ -13,6 +14,7 @@ import {
   deleteDocument,
   setDocumentVisibility,
 } from "@/server/organizations/documents";
+import { removeOrganizationLogo, setOrganizationLogo } from "@/server/organizations/logo";
 import { updateOrganization } from "@/server/organizations/organizations";
 
 // Каждое действие заново проверяет сессию: кнопку могли вызвать и без страницы кабинета.
@@ -134,4 +136,30 @@ export async function reviewDeal(
   }
   refresh();
   return { ok: true, message: "Спасибо за отзыв" };
+}
+
+export async function uploadCompanyLogo(form: FormData): Promise<FormState> {
+  const user = await requireOrganizationUser();
+  const file = form.get("logo");
+  try {
+    await setOrganizationLogo(user.organization.id, file instanceof File ? file : null);
+  } catch (error) {
+    const state = toFormState(error);
+    return { error: state.fieldErrors?.logo?.[0] ?? state.error };
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function deleteCompanyLogo(): Promise<void> {
+  const user = await requireOrganizationUser();
+  await removeOrganizationLogo(user.organization.id);
+  refresh();
+}
+
+/** Пересобрать ИИ-сводку: после новых документов, сделок или отзывов. */
+export async function refreshCompanyAssessment(): Promise<void> {
+  const user = await requireOrganizationUser();
+  await refreshAssessment(user.organization.id);
+  refresh();
 }

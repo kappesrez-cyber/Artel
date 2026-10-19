@@ -25,7 +25,15 @@ const productSelect = {
   status: true,
   createdAt: true,
   updatedAt: true,
-  organization: { select: { id: true, name: true } },
+  organization: {
+    select: {
+      id: true,
+      name: true,
+      logo: { select: { updatedAt: true } },
+      /** Итог ИИ-сводки для плашки в карточке. */
+      assessment: { select: { verdict: true, tone: true } },
+    },
+  },
   /** Только адреса снимков (`/api/photos/{id}`), сами файлы отдаются отдельно. */
   photos: { select: { id: true }, orderBy: photoOrder },
 } satisfies Prisma.ProductSelect;

@@ -195,3 +195,13 @@ export function PhotoIcon({ className }: IconProps) {
     </LineIcon>
   );
 }
+
+/** Искра: всё, что подготовил ИИ (сводка о производителе, распознавание по фото). */
+export function SparkleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
+      <path d="M11.2 2.6a.85.85 0 0 1 1.6 0l1.5 4.3a3 3 0 0 0 1.8 1.8l4.3 1.5a.85.85 0 0 1 0 1.6l-4.3 1.5a3 3 0 0 0-1.8 1.8l-1.5 4.3a.85.85 0 0 1-1.6 0l-1.5-4.3a3 3 0 0 0-1.8-1.8l-4.3-1.5a.85.85 0 0 1 0-1.6l4.3-1.5a3 3 0 0 0 1.8-1.8z" />
+      <path d="M19 1.5a.5.5 0 0 1 .95 0l.45 1.3a1 1 0 0 0 .6.6l1.3.45a.5.5 0 0 1 0 .95l-1.3.45a1 1 0 0 0-.6.6l-.45 1.3a.5.5 0 0 1-.95 0l-.45-1.3a1 1 0 0 0-.6-.6l-1.3-.45a.5.5 0 0 1 0-.95l1.3-.45a1 1 0 0 0 .6-.6z" />
+    </svg>
+  );
+}

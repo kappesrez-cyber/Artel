@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after, connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
+import { VerdictBadge } from "@/components/Assessment";
+import { CompanyLogo } from "@/components/CompanyLogo";
 import { buttonClass } from "@/components/form";
 import { companyHref, routes } from "@/components/navigation";
 import { PhotoGallery } from "@/components/PhotoGallery";
@@ -27,13 +29,23 @@ async function Product({ params }: Pick<PageProps<"/products/[id]">, "params">) 
   const facts: [string, ReactNode][] = [
     [
       "Производитель",
-      <Link
-        key="org"
-        href={companyHref(product.organization.id)}
-        className="text-brand hover:opacity-80"
-      >
-        {product.organization.name}
-      </Link>,
+      <span key="org" className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <Link
+          href={companyHref(product.organization.id)}
+          className="text-brand inline-flex items-center gap-3 hover:opacity-80"
+        >
+          <CompanyLogo organization={product.organization} className="size-10 text-sm" />
+          {product.organization.name}
+        </Link>
+        {product.organization.assessment && (
+          <Link href={`${companyHref(product.organization.id)}#ai-summary`}>
+            <VerdictBadge
+              verdict={product.organization.assessment.verdict}
+              tone={product.organization.assessment.tone}
+            />
+          </Link>
+        )}
+      </span>,
     ],
     ...(product.article ? [["Артикул", product.article] as [string, ReactNode]] : []),
     ...(product.analogs ? [["Заменяет", product.analogs] as [string, ReactNode]] : []),
