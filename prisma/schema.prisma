@@ -1,0 +1,558 @@
+// Схема базы данных ПромПул.
+// После правки: `npm run db:migrate -- --name <имя>` и закоммитить миграцию.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Предприятие на платформе: одна учётная запись и для продаж, и для закупок.
+/// Режимы продавца и покупателя включаются флагами `isSeller` и `isBuyer`.
+/// Сотрудники получают доступ через членство (`Membership`).
+model Organization {
+  id              String                 @id @default(cuid())
+  /// Название, как его видит контрагент: «ООО Обнал».
+  name            String
+  /// ИНН (10 цифр у юрлица, 12 у ИП).
+  inn             String?                @unique
+  /// ОГРН (13 цифр) или ОГРНИП (15 цифр).
+  ogrn            String?
+  /// Город регистрации. У каждой позиции свой город производства.
+  city            String?
+  legalAddress    String?
+  /// Чем занимается предприятие: продукция, мощности, отрасли.
+  description     String?
+  website         String?
+  phone           String?
+  email           String?
+  foundedYear     Int?
+  /// Продаёт: может заводить позиции каталога и принимать сделки.
+  isSeller        Boolean                @default(true)
+  /// Покупает: может предлагать сделки по позициям других предприятий.
+  isBuyer         Boolean                @default(true)
+  /// Когда платформа проверила реквизиты. Пока проставляется вручную.
+  verifiedAt      DateTime?
+  products        Product[]
+  memberships     Membership[]
+  documents       OrganizationDocument[]
+  dealsAsSeller   Deal[]                 @relation("DealSeller")
+  dealsAsBuyer    Deal[]                 @relation("DealBuyer")
+  reviewsWritten  Review[]               @relation("ReviewAuthor")
+  reviewsReceived Review[]               @relation("ReviewTarget")
+  /// Звёзды на счету предприятия: покупаются (`StarPurchase`) и вкладываются в заказы (`OrderBoost`).
+  starBalance     Int                    @default(0)
+  orders          Order[]
+  orderBoosts     OrderBoost[]
+  starPurchases   StarPurchase[]
+  /// Тариф (`src/server/plans/plans.ts`). Действует до `planUntil`, после — Free.
+  plan            PlanTier               @default(FREE)
+  planUntil       DateTime?
+  planPurchases   PlanPurchase[]
+  /// Логотип: отдельной таблицей, чтобы байты не тянулись с каждой выборкой предприятия.
+  logo            OrganizationLogo?
+  /// ИИ-сводка о надёжности (`src/server/assessment`).
+  assessment      CompanyAssessment?
+  photoSearches   PhotoSearch[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+}
+
+/// Человек, который входит на сайт. Представляет одно или несколько предприятий.
+model User {
+  id           String       @id @default(cuid())
+  /// В нижнем регистре; по нему входят.
+  email        String       @unique
+  /// Как обращаться: «Иван Петров».
+  name         String
+  /// scrypt, формат см. `src/server/auth/password.ts`.
+  passwordHash String
+  memberships  Membership[]
+  sessions     Session[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+/// Сессия входа. В cookie лежит случайный токен, в базе — только его SHA-256.
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum MemberRole {
+  /// Создал аккаунт предприятия, управляет всем.
+  OWNER
+  /// Сотрудник: каталог, сделки, документы.
+  MEMBER
+}
+
+model Membership {
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           MemberRole   @default(MEMBER)
+  createdAt      DateTime     @default(now())
+
+  @@id([userId, organizationId])
+  @@index([organizationId])
+}
+
+enum DocumentKind {
+  /// Учредительные документы, выписка ЕГРЮЛ.
+  REGISTRATION
+  /// Сертификаты и декларации соответствия.
+  CERTIFICATE
+  /// Лицензии и разрешения.
+  LICENSE
+  /// Бухгалтерская и финансовая отчётность.
+  FINANCIAL_REPORT
+  /// Протоколы испытаний, системы качества (ISO, ХАССП).
+  QUALITY
+  OTHER
+}
+
+/// Документ или отчёт предприятия. Файлы пока хранятся по ссылке (`url`).
+model OrganizationDocument {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  kind           DocumentKind @default(OTHER)
+  title          String
+  /// Номер документа, если есть.
+  number         String?
+  issuedAt       DateTime?    @db.Date
+  validUntil     DateTime?    @db.Date
+  url            String?
+  /// Виден ли документ на публичной странице предприятия.
+  isPublic       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+/// Ход сделки: покупатель предлагает, продавец принимает, покупатель подтверждает получение.
+enum DealStatus {
+  REQUESTED
+  ACCEPTED
+  /// Успешная сделка: учитывается в счётчике и открывает отзывы.
+  COMPLETED
+  CANCELLED
+}
+
+/// Сделка между двумя предприятиями, обычно по позиции каталога.
+model Deal {
+  id                    String       @id @default(cuid())
+  sellerId              String
+  seller                Organization @relation("DealSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyerId               String
+  buyer                 Organization @relation("DealBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  productId             String?
+  product               Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  /// Название на момент сделки: позицию могут переименовать или удалить.
+  title                 String
+  quantity              Int          @default(1)
+  /// Цена за единицу на момент сделки, в рублях.
+  unitPrice             Decimal?     @db.Decimal(14, 2)
+  comment               String?
+  status                DealStatus   @default(REQUESTED)
+  createdByUserId       String?
+  acceptedAt            DateTime?
+  completedAt           DateTime?
+  cancelledAt           DateTime?
+  /// Предприятие на тарифе Ultra попросило помочь с документами по сделке.
+  docsHelpRequestedAt   DateTime?
+  docsHelpRequestedById String?
+  reviews               Review[]
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@index([sellerId, status])
+  @@index([buyerId, status])
+}
+
+/// Отзыв одного предприятия о другом. Только по завершённой сделке, один от каждой стороны.
+model Review {
+  id                   String       @id @default(cuid())
+  dealId               String
+  deal                 Deal         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  authorOrganizationId String
+  authorOrganization   Organization @relation("ReviewAuthor", fields: [authorOrganizationId], references: [id], onDelete: Cascade)
+  targetOrganizationId String
+  targetOrganization   Organization @relation("ReviewTarget", fields: [targetOrganizationId], references: [id], onDelete: Cascade)
+  /// От 1 до 5.
+  rating               Int
+  text                 String
+  createdAt            DateTime     @default(now())
+
+  @@unique([dealId, authorOrganizationId])
+  @@index([targetOrganizationId])
+}
+
+/// Видимость позиции. В поиске показываются только опубликованные.
+enum ProductStatus {
+  /// Черновик: производитель ещё заполняет карточку.
+  DRAFT
+  /// Опубликована и находится поиском.
+  PUBLISHED
+  /// Снята с продажи, история сохраняется.
+  ARCHIVED
+}
+
+/// Позиция каталога производителя: деталь, узел, ингредиент.
+/// Заполняется производителем в режиме продавца: в личном кабинете или через API `/api/organizations/{id}/products`.
+model Product {
+  id             String                   @id @default(cuid())
+  organizationId String
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  /// Артикул или модель производителя: «ПШ-6205-2RS».
+  article        String?
+  /// Импортные позиции, которые заменяет эта: бренды и артикулы через запятую, «SKF 6205-2RSH, FAG 6205-2RSR».
+  /// Покупатель часто ищет именно по артикулу оригинала.
+  analogs        String?
+  /// Цена за единицу в рублях, с копейками.
+  price          Decimal                  @db.Decimal(14, 2)
+  /// Срок производства в календарных днях. Хранится длительностью, а не датой:
+  /// покупатель видит дату готовности, отсчитанную от дня просмотра.
+  leadTimeDays   Int
+  /// Город, где производится или откуда отгружается позиция.
+  city           String
+  status         ProductStatus            @default(DRAFT)
+  /// Нормализованный текст для поиска: название, артикулы (и слитно, и по частям), аналоги,
+  /// описание, город, производитель. Заполняется слоем данных `src/server/catalog`, вручную не редактируется.
+  /// По нему работает нечёткий поиск (триграммы pg_trgm).
+  searchText     String                   @default("")
+  /// Полнотекстовый индекс с русской морфологией. Пересчитывает триггер базы
+  /// `product_search_vector` из name, article, analogs, description и searchText (см. миграцию search).
+  searchVector   Unsupported("tsvector")?
+  deals          Deal[]
+  events         ProductEvent[]
+  photos         Photo[]
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([searchVector], type: Gin)
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin)
+}
+
+enum ProductEventKind {
+  /// Позиция показана в результатах поиска.
+  IMPRESSION
+  /// Покупатель открыл карточку позиции.
+  VIEW
+}
+
+/// Показы и просмотры позиций — для аналитики продавца. Свои просмотры не считаются.
+model ProductEvent {
+  id                   String           @id @default(cuid())
+  productId            String
+  product              Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kind                 ProductEventKind
+  /// Предприятие, которое смотрело (если вошло).
+  viewerOrganizationId String?
+  /// Поисковый запрос, по которому позицию показали.
+  searchQueryId        String?
+  searchQuery          SearchQuery?     @relation(fields: [searchQueryId], references: [id], onDelete: SetNull)
+  createdAt            DateTime         @default(now())
+
+  @@index([productId, kind, createdAt])
+  @@index([searchQueryId])
+}
+
+/// Запрос покупателя в поиске. Нужен для аналитики спроса: что ищут и чего не находят.
+model SearchQuery {
+  id                   String         @id @default(cuid())
+  /// Как ввёл покупатель.
+  query                String
+  /// Нормализованный запрос: по нему группируются одинаковые запросы.
+  normalized           String
+  resultsCount         Int
+  viewerOrganizationId String?
+  events               ProductEvent[]
+  createdAt            DateTime       @default(now())
+
+  @@index([createdAt])
+  @@index([normalized])
+}
+
+/// Заказ на рынке: заказчик не нашёл позицию в каталоге и описывает, что ему нужно, как в тендере.
+/// Предприятия видят открытые заказы в режиме продавца («Продавцам», `/market`).
+enum OrderStatus {
+  /// На рынке: виден производителям.
+  OPEN
+  /// Заказчик нашёл исполнителя или снял заказ.
+  CLOSED
+}
+
+enum OrderNeedKind {
+  /// Найти отечественную замену импортной позиции.
+  IMPORT_REPLACEMENT
+  /// Изготовить по чертежам или ТЗ заказчика.
+  MANUFACTURE
+  /// Регулярные поставки готовой продукции.
+  SUPPLY
+}
+
+enum OrderRecurrence {
+  ONCE
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model Order {
+  id                String            @id @default(cuid())
+  customerId        String
+  customer          Organization      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdByUserId   String?
+  /// Что нужно: «Подшипник 6205-2RS для комбайна Claas».
+  title             String
+  /// Раздел «Информация»: назначение, где используется, чем заменить импорт.
+  description       String
+  /// Раздел «Основное ТЗ»: размеры, материалы, допуски, стандарты.
+  specification     String?
+  quantity          Int?
+  /// Единица количества: шт., кг, комплект.
+  unit              String            @default("шт.")
+  /// Ориентировочный бюджет на весь заказ, в рублях.
+  budget            Decimal?          @db.Decimal(14, 2)
+  /// Когда нужно получить.
+  deadline          DateTime?         @db.Date
+  /// Город поставки.
+  city              String?
+  /// Что за потребность: замена импорта, разработка по ТЗ, серийная поставка.
+  needKind          OrderNeedKind?
+  /// Оригинал, который заменяем: бренд и артикул или модель.
+  originalBrand     String?
+  originalArticle   String?
+  /// Где применяется: техника, линия, узел.
+  application       String?
+  /// Отрасль заказчика для этой позиции.
+  industry          String?
+  /// Можно ли предложить аналог с близкими характеристиками.
+  analogAllowed     Boolean?
+  /// Разовая закупка или регулярные поставки.
+  recurrence        OrderRecurrence?
+  /// Какие документы нужны с поставкой: сертификат, паспорт качества и т. п.
+  requiredDocuments String[]          @default([])
+  contactName       String
+  contactPhone      String?
+  contactEmail      String?
+  status            OrderStatus       @default(OPEN)
+  /// Сумма всех вложенных звёзд. Хранится в заказе, чтобы рынок сортировался по ней.
+  stars             Int               @default(0)
+  attachments       OrderAttachment[]
+  photos            Photo[]
+  boosts            OrderBoost[]
+  closedAt          DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([status, stars(sort: Desc), createdAt(sort: Desc)])
+  @@index([customerId])
+}
+
+enum OrderAttachmentKind {
+  /// Файл технического задания.
+  SPECIFICATION
+  /// Чертежи, схемы, паспорта, фото образца.
+  TECHNICAL
+}
+
+/// Файл к заказу. Хранится прямо в базе (до 4 МБ на заказ), чтобы не зависеть от внешнего хранилища.
+model OrderAttachment {
+  id        String              @id @default(cuid())
+  orderId   String
+  order     Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind      OrderAttachmentKind
+  fileName  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime            @default(now())
+
+  @@index([orderId])
+}
+
+/// Фотография позиции каталога или заказа (ровно одно из `productId`, `orderId`, см. CHECK в миграции photos).
+/// Хранится в базе, как файлы заказа: браузер заранее уменьшает снимок, так что это сотни килобайт.
+/// Первой на странице показывается фотография с наименьшим `position`.
+model Photo {
+  id        String   @id @default(cuid())
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  mimeType  String
+  size      Int
+  data      Bytes
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId, position])
+  @@index([orderId, position])
+}
+
+/// Звёзды, вложенные в заказ. Вкладывать может и сам заказчик, и любое другое предприятие,
+/// которому нужна такая же позиция: тогда оно указывает свой объём, и производитель видит общий спрос.
+model OrderBoost {
+  id             String       @id @default(cuid())
+  orderId        String
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  stars          Int
+  /// Сколько нужно этому предприятию (для присоединившихся к заказу).
+  quantity       Int?
+  comment        String?
+  createdAt      DateTime     @default(now())
+
+  @@index([orderId])
+  @@index([organizationId])
+}
+
+enum StarPurchaseStatus {
+  /// Платёж создан, ждём подтверждения от платёжного провайдера.
+  PENDING
+  /// Оплачено: звёзды зачислены.
+  PAID
+  CANCELLED
+}
+
+/// Покупка звёзд. Оплату проводит платёжный провайдер (`src/server/stars/payments.ts`);
+/// пока подключена тестовая заглушка `stub`.
+model StarPurchase {
+  id                String             @id @default(cuid())
+  organizationId    String
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId            String?
+  stars             Int
+  /// Сумма к оплате в рублях.
+  amount            Decimal            @db.Decimal(14, 2)
+  provider          String
+  /// Номер платежа у провайдера.
+  providerPaymentId String?            @unique
+  status            StarPurchaseStatus @default(PENDING)
+  paidAt            DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([organizationId, createdAt])
+}
+
+enum PlanTier {
+  FREE
+  PRO
+  MAX
+  ULTRA
+}
+
+/// Оплата месяца тарифа. Тот же провайдер и та же тестовая заглушка, что у звёзд.
+model PlanPurchase {
+  id                String             @id @default(cuid())
+  organizationId    String
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId            String?
+  plan              PlanTier
+  /// Сумма к оплате в рублях.
+  amount            Decimal            @db.Decimal(14, 2)
+  provider          String
+  providerPaymentId String?            @unique
+  status            StarPurchaseStatus @default(PENDING)
+  paidAt            DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([organizationId, createdAt])
+}
+
+/// Логотип предприятия. Браузер заранее уменьшает картинку до 512 px, так что это десятки килобайт.
+/// Отдаётся по `/api/organizations/{id}/logo?v={updatedAt}`: новая версия — новый адрес.
+model OrganizationLogo {
+  organizationId String       @id
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  mimeType       String
+  size           Int
+  data           Bytes
+  updatedAt      DateTime     @updatedAt
+}
+
+/// Итоговая оценка в ИИ-сводке: от неё зависит цвет плашки.
+enum AssessmentTone {
+  /// Надёжный: можно работать без лишних проверок.
+  RELIABLE
+  /// Хороший, но истории пока меньше.
+  GOOD
+  /// Есть вопросы: стоит перепроверить.
+  CAUTION
+  /// Высокий риск: перекуп, пустышка, срывы.
+  RISK
+}
+
+/// ИИ-сводка о предприятии: пункты проверки и итог в пару слов («Надёжный производитель»,
+/// «Перекуп-пустышка»). Собирается `src/server/assessment` из данных платформы и внешних проверок.
+model CompanyAssessment {
+  organizationId String         @id
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Итог в пару слов.
+  verdict        String
+  tone           AssessmentTone
+  /// Индекс доверия 0–100.
+  score          Int
+  /// Одно-два предложения: что это значит для покупателя.
+  summary        String
+  /// Пункты сводки: `{ kind: "ok" | "warn" | "bad", text, source }[]`.
+  points         Json
+  /// Результаты внешних проверок (ФНС, суды, выезд на площадку). Сохраняются при пересчёте.
+  external       Json           @default("{}")
+  generatedAt    DateTime       @default(now())
+}
+
+/// Поиск детали по фотографиям: покупатель снимает деталь с нескольких сторон, ИИ определяет,
+/// что это, и подбирает позиции каталога. Результат открывается по своему адресу `/search/photo/{id}`.
+model PhotoSearch {
+  id                   String             @id @default(cuid())
+  viewerOrganizationId String?
+  viewerOrganization   Organization?      @relation(fields: [viewerOrganizationId], references: [id], onDelete: SetNull)
+  /// Подпись покупателя, если он её добавил: «стоит в приводе жатки».
+  hint                 String?
+  /// Что распознано: `src/server/photo-search/recognize.ts`, тип `Recognition`.
+  recognition          Json
+  /// По какому запросу подбирать позиции каталога.
+  query                String
+  images               PhotoSearchImage[]
+  createdAt            DateTime           @default(now())
+
+  @@index([createdAt])
+}
+
+/// Снимок в поиске по фото, с ракурсом: спереди, сбоку, маркировка…
+model PhotoSearchImage {
+  id        String      @id @default(cuid())
+  searchId  String
+  search    PhotoSearch @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  /// Ракурс, который выбрал покупатель: `src/server/photo-search/angles.ts`.
+  angle     String
+  mimeType  String
+  size      Int
+  data      Bytes
+  position  Int
+  createdAt DateTime    @default(now())
+
+  @@index([searchId, position])
+}

@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: prompool
+      POSTGRES_PASSWORD: prompool
+      POSTGRES_DB: prompool
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prompool -d prompool"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Приложение целиком в Docker: `docker compose --profile app up --build`
+  app:
+    profiles: ["app"]
+    build: .
+    environment:
+      DATABASE_URL: postgresql://prompool:prompool@db:5432/prompool?schema=public
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
