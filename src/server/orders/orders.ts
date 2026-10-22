@@ -67,7 +67,7 @@ const cardSelect = {
   stars: true,
   status: true,
   createdAt: true,
-  customer: { select: { id: true, name: true, city: true } },
+  customer: { select: { id: true, name: true, city: true, logo: { select: { updatedAt: true } } } },
   boosts: { select: { organizationId: true, quantity: true } },
 } satisfies Prisma.OrderSelect;
 
