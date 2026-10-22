@@ -3,47 +3,89 @@ import type { ProductView } from "@/server/catalog/products";
 import { formatDate, formatPrice, readyDate } from "@/server/catalog/format";
 import { VerdictBadge } from "./Assessment";
 import { CompanyLogo } from "./CompanyLogo";
-import { ArrowLeftCircleIcon } from "./icons";
+import { ArrowLeftCircleIcon, PhotoIcon } from "./icons";
 import { productHref } from "./navigation";
 
 /**
- * Карточка результата поиска. Срок показывается датой: сегодня плюс срок производства,
- * поэтому `now` — момент просмотра страницы.
+ * Карточка результата поиска: фото, название, производитель и итог ИИ-сводки, внизу срок и цена.
+ * Срок показывается датой: сегодня плюс срок производства, поэтому `now` — момент просмотра страницы.
  */
 export function ProductCard({ product, now }: { product: ProductView; now: Date }) {
+  const photo = product.photos[0];
   return (
     <Link
       href={productHref(product.id)}
-      className="group hover:border-brand focus-visible:border-brand flex min-h-[calc(var(--u)*318)] flex-col rounded-[calc(var(--u)*31)] border-[calc(var(--u)*8)] border-gray-200 bg-white pt-[calc(var(--u)*4)] pr-[calc(var(--u)*13)] pb-[calc(var(--u)*10)] pl-[calc(var(--u)*13)] leading-none font-bold tracking-[-0.04em] transition-colors outline-none max-md:border-4 max-md:p-3"
+      className="group hover:border-brand-dark focus-visible:border-brand-dark focus-visible:ring-brand-dark/20 flex h-full flex-col overflow-hidden rounded-[calc(var(--u)*24)] border-[calc(var(--u)*2)] border-gray-200 bg-white shadow-(--shadow-soft) transition-[border-color,box-shadow,translate] outline-none hover:-translate-y-0.5 hover:shadow-(--shadow-lift) focus-visible:ring-4 max-md:rounded-2xl max-md:border"
     >
-      <h2 className="truncate pl-[calc(var(--u)*10)] text-[calc(var(--u)*48)] leading-[1.2] text-gray-900 max-md:text-2xl">
-        {product.name}
-      </h2>
-      <div className="mt-[calc(var(--u)*17)] flex items-center gap-[calc(var(--u)*18)] text-[calc(var(--u)*40)] text-gray-600 max-md:mt-2 max-md:gap-2 max-md:text-xl">
-        <CompanyLogo
-          organization={product.organization}
-          className="size-[calc(var(--u)*92)] text-[calc(var(--u)*34)] max-md:size-11 max-md:text-base"
-        />
-        <p className="min-w-0">
-          <span className="block truncate">{product.organization.name}</span>
-          <span className="block truncate">г. {product.city}</span>
-        </p>
+      <div className="bg-brand-mist relative aspect-[2/1] shrink-0 border-b border-gray-200">
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- снимок из своей базы, оптимизатор не нужен
+          <img
+            src={`/api/photos/${encodeURIComponent(photo.id)}`}
+            alt=""
+            loading="lazy"
+            className="size-full object-cover"
+          />
+        ) : (
+          <div className="text-brand-dark/45 flex size-full flex-col items-center justify-center gap-[calc(var(--u)*10)] text-[calc(var(--u)*22)] font-semibold max-md:gap-1 max-md:text-sm">
+            <PhotoIcon className="size-[calc(var(--u)*64)] max-md:size-10" />
+            Фото пока нет
+          </div>
+        )}
+        {product.article && (
+          <span className="text-brand-dark absolute top-[calc(var(--u)*16)] left-[calc(var(--u)*16)] max-w-[70%] truncate rounded-full bg-white px-[calc(var(--u)*14)] py-[calc(var(--u)*6)] text-[calc(var(--u)*20)] font-bold ring-1 ring-gray-200 max-md:top-2 max-md:left-2 max-md:px-2.5 max-md:py-1 max-md:text-xs">
+            {product.article}
+          </span>
+        )}
       </div>
-      {product.organization.assessment && (
-        <VerdictBadge
-          verdict={product.organization.assessment.verdict}
-          tone={product.organization.assessment.tone}
-          className="mt-[calc(var(--u)*14)] self-start px-[calc(var(--u)*18)] py-[calc(var(--u)*7)] text-[calc(var(--u)*28)] tracking-normal max-md:mt-2 max-md:px-2.5 max-md:py-1 max-md:text-sm"
-        />
-      )}
-      <p className="mt-[calc(var(--u)*8)] pl-[calc(var(--u)*3)] text-[calc(var(--u)*44)] text-gray-600 max-md:text-xl">
-        Срок: {formatDate(readyDate(product.leadTimeDays, now))}
-      </p>
-      <div className="mt-auto flex items-end justify-between gap-2 pt-[calc(var(--u)*10)]">
-        <p className="text-brand-dark text-[calc(var(--u)*48)] tracking-[0.06em] whitespace-nowrap max-md:text-2xl">
-          {formatPrice(product.price)}
-        </p>
-        <ArrowLeftCircleIcon className="text-brand-dark size-[calc(var(--u)*65)] shrink-0 transition-transform group-hover:-translate-x-1 max-md:size-8" />
+
+      <div className="flex flex-1 flex-col p-[calc(var(--u)*26)] max-md:p-4">
+        <h2 className="line-clamp-2 text-[calc(var(--u)*32)] leading-[1.2] font-extrabold tracking-[-0.01em] text-gray-900 max-md:text-xl">
+          {product.name}
+        </h2>
+
+        <div className="mt-[calc(var(--u)*20)] flex items-center gap-[calc(var(--u)*14)] max-md:mt-3 max-md:gap-2.5">
+          <CompanyLogo
+            organization={product.organization}
+            className="size-[calc(var(--u)*60)] text-[calc(var(--u)*22)] max-md:size-10 max-md:text-sm"
+          />
+          <p className="min-w-0 leading-[1.25]">
+            <span className="block truncate text-[calc(var(--u)*24)] font-bold text-gray-900 max-md:text-base">
+              {product.organization.name}
+            </span>
+            <span className="block truncate text-[calc(var(--u)*21)] text-gray-500 max-md:text-sm">
+              г. {product.city}
+            </span>
+          </p>
+        </div>
+
+        {product.organization.assessment && (
+          <VerdictBadge
+            verdict={product.organization.assessment.verdict}
+            tone={product.organization.assessment.tone}
+            className="mt-[calc(var(--u)*16)] self-start px-[calc(var(--u)*14)] py-[calc(var(--u)*6)] text-[calc(var(--u)*20)] max-md:mt-3 max-md:px-2.5 max-md:py-1 max-md:text-xs"
+          />
+        )}
+
+        <div className="mt-auto pt-[calc(var(--u)*24)] max-md:pt-4">
+          <div className="flex items-end justify-between gap-3 border-t border-gray-200 pt-[calc(var(--u)*20)] max-md:pt-3">
+            <p className="leading-[1.2]">
+              <span className="block text-[calc(var(--u)*19)] font-semibold text-gray-500 max-md:text-xs">
+                Готово к
+              </span>
+              <span className="block text-[calc(var(--u)*24)] font-bold text-gray-900 max-md:text-base">
+                {formatDate(readyDate(product.leadTimeDays, now))}
+              </span>
+            </p>
+            <p className="text-brand-navy text-[calc(var(--u)*38)] leading-none font-extrabold tracking-[-0.01em] whitespace-nowrap max-md:text-2xl">
+              {formatPrice(product.price)}
+            </p>
+          </div>
+          <span className="bg-brand-dark group-hover:bg-brand-navy mt-[calc(var(--u)*20)] flex items-center justify-center gap-[calc(var(--u)*10)] rounded-[calc(var(--u)*14)] py-[calc(var(--u)*16)] text-[calc(var(--u)*24)] font-bold text-white transition-colors max-md:mt-3 max-md:gap-2 max-md:rounded-xl max-md:py-2.5 max-md:text-base">
+            Подробнее
+            <ArrowLeftCircleIcon className="size-[calc(var(--u)*28)] rotate-180 transition-transform group-hover:translate-x-1 max-md:size-5" />
+          </span>
+        </div>
       </div>
     </Link>
   );

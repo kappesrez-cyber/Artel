@@ -13,6 +13,10 @@
   --color-foreground: var(--foreground);
   --color-brand: #2074a8;
   --color-brand-dark: #173780;
+  /* Чуть светлее тёмно-синего: цены и наведение на кнопки. */
+  --color-brand-navy: #1d3a8a;
+  /* Бледный фон под фото и плашками в фирменном синем. */
+  --color-brand-mist: #eef2fb;
   --color-brand-gray: #dadada;
   --font-sans:
     var(--font-golos), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial,
