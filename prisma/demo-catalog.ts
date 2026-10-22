@@ -10,6 +10,8 @@ export type DemoProduct = {
   leadTimeDays: number;
   city: string;
   status: "PUBLISHED" | "DRAFT";
+  /** Снимки из `prisma/demo-photos`, первый — главный. */
+  photos?: string[];
 };
 
 /** Позиции «ООО Обнал» (Анкоридж): металлообработка для сельхозтехники. */
@@ -118,5 +120,6 @@ export const techmashProducts: DemoProduct[] = [
     leadTimeDays: 14,
     city: "Ростов-на-Дону",
     status: "PUBLISHED",
+    photos: ["amylase.jpg"],
   },
 ];

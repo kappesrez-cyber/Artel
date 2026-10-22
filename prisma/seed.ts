@@ -370,14 +370,26 @@ async function seedSeller2Deals(sellerId: string, buyerId: string) {
 async function ensureProducts(organizationId: string, list: DemoProduct[]): Promise<string[]> {
   const current = await listOrganizationProducts(organizationId);
   const ids: string[] = [];
-  for (const product of list) {
+  for (const { photos, ...product } of list) {
     const found = current.find((p) => p.name === product.name);
     const saved = found
       ? await updateProduct(organizationId, found.id, product)
       : await createProduct(organizationId, product);
     ids.push(saved.id);
+    if (photos?.length) await ensurePhotos(saved.id, photos);
   }
   return ids;
+}
+
+/** Демо-снимки позиции, если у неё ещё нет ни одного: свои фото продавца не трогаем. */
+async function ensurePhotos(productId: string, files: string[]) {
+  if ((await db().photo.count({ where: { productId } })) > 0) return;
+  await db().photo.createMany({
+    data: files.map((file, position) => {
+      const data = readFileSync(join(import.meta.dirname, "demo-photos", file));
+      return { productId, mimeType: "image/jpeg", size: data.byteLength, data, position };
+    }),
+  });
 }
 
 /**
