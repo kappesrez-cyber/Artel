@@ -34,7 +34,7 @@ export function VerdictBadge({
   return (
     <span
       title="Итог ИИ-сводки"
-      className={`inline-flex items-center gap-1.5 rounded-full font-extrabold whitespace-nowrap ${verdictTones[tone]} ${className}`}
+      className={`inline-flex max-w-full items-center gap-1.5 rounded-full font-extrabold ${verdictTones[tone]} ${className}`}
     >
       <SparkleIcon className="size-[1.05em] shrink-0" />
       {verdict}
@@ -129,27 +129,29 @@ export function AssessmentPanel({
       aria-label="ИИ-сводка о предприятии"
       className="relative overflow-hidden rounded-[2rem] border border-gray-200/80 bg-white shadow-[var(--shadow-soft)]"
     >
-      <div className="from-brand-dark to-brand flex flex-wrap items-center gap-x-6 gap-y-4 bg-linear-to-r px-6 py-5 text-white md:px-8">
+      <div className="from-brand-dark to-brand flex items-center gap-4 bg-linear-to-r px-5 py-5 text-white md:gap-6 md:px-8">
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <span className="inline-flex items-center gap-2 text-sm font-bold tracking-wide text-white/80 uppercase">
             <SparkleIcon className="size-4" /> ИИ-сводка о производителе
           </span>
-          <p className="text-2xl leading-tight font-extrabold md:text-3xl">
-            {name}: <span className="whitespace-nowrap">{assessment.verdict.toLowerCase()}</span>
+          <p className="text-2xl leading-tight font-extrabold break-words hyphens-auto max-sm:text-xl md:text-3xl">
+            {name}: <span className="sm:whitespace-nowrap">{assessment.verdict.toLowerCase()}</span>
           </p>
         </div>
-        <div className="rounded-full bg-white p-1.5">
+        <div className="shrink-0 rounded-full bg-white p-1.5">
           <ScoreRing score={assessment.score} tone={assessment.tone} size={96} />
         </div>
       </div>
-      <div className="flex flex-col gap-5 px-6 py-6 md:px-8">
+      <div className="flex flex-col gap-5 px-5 py-6 md:px-8">
         <div className="flex flex-wrap items-center gap-3">
           <VerdictBadge
             verdict={assessment.verdict}
             tone={assessment.tone}
             className="px-4 py-1.5 text-base"
           />
-          <p className="min-w-0 flex-1 text-lg text-gray-700">{assessment.summary}</p>
+          <p className="min-w-[min(16rem,100%)] flex-1 text-lg text-gray-700">
+            {assessment.summary}
+          </p>
         </div>
         <ul className="grid gap-x-8 gap-y-3 md:grid-cols-2">
           {points.map((point) => (

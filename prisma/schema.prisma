@@ -455,11 +455,11 @@ model StarPurchase {
   @@index([organizationId, createdAt])
 }
 
+/// Тарифы: Старт (бесплатно), Про, Холдинг.
 enum PlanTier {
   FREE
   PRO
-  MAX
-  ULTRA
+  HOLDING
 }
 
 /// Оплата месяца тарифа. Тот же провайдер и та же тестовая заглушка, что у звёзд.

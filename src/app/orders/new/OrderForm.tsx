@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, type ReactNode } from "react";
 import { Field, FormMessage, SubmitButton, TextArea } from "@/components/form";
 import { initialFormState } from "@/components/form-state";
+import { DisclosureIcon } from "@/components/icons";
 import { ReplacementQuestions } from "@/components/OrderQuestionnaire";
 import { StarAmount } from "@/components/ui";
 import { placeOrder } from "./actions";
@@ -176,16 +177,11 @@ export function OrderForm({
 function Part({ title, children }: { title: string; children: ReactNode }) {
   return (
     <details open className="group">
-      <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center gap-3 max-md:justify-between [&::-webkit-details-marker]:hidden">
         <h2 className="text-[calc(var(--u)*75)] font-extrabold tracking-[-0.01em] max-md:text-2xl">
           {title}
         </h2>
-        <span
-          aria-hidden
-          className="text-[calc(var(--u)*56)] leading-none transition-transform group-open:rotate-180 max-md:text-xl"
-        >
-          ∨
-        </span>
+        <DisclosureIcon />
       </summary>
       <div className="mt-4 flex flex-col gap-4">{children}</div>
     </details>

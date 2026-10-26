@@ -149,7 +149,7 @@ export async function changeDealStatus(organizationId: string, dealId: string, a
 
 /**
  * Попросить юриста платформы подготовить документы по сделке (договор, спецификацию,
- * закрывающие). Входит в тариф Ultra; доступно любой стороне принятой или успешной сделки.
+ * закрывающие). Входит в тариф Холдинг; доступно любой стороне принятой или успешной сделки.
  */
 export async function requestDocsHelp(organizationId: string, userId: string, dealId: string) {
   const deal = await findOwnDeal(organizationId, dealId);
@@ -158,7 +158,7 @@ export async function requestDocsHelp(organizationId: string, userId: string, de
   }
   const { tier } = await getOrganizationPlan(organizationId);
   if (!getPlan(tier).docsHelp)
-    throw new ForbiddenError("Помощь с документами входит в тариф Ultra");
+    throw new ForbiddenError("Помощь с документами входит в тариф Холдинг");
   await db().deal.updateMany({
     where: { id: deal.id, docsHelpRequestedAt: null },
     data: { docsHelpRequestedAt: new Date(), docsHelpRequestedById: userId },

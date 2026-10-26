@@ -47,3 +47,16 @@ export async function authenticate(input: unknown): Promise<string | null> {
   const ok = await verifyPassword(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
   return ok && user ? user.id : null;
 }
+
+/**
+ * Гостевой (демо) вход: аккаунт производителя «ООО Техмаш-Юг» из демо-данных (`prisma/seed.ts`).
+ * Он и продаёт, и покупает, у него есть позиции, сделки и отзывы — жюри и гости видят кабинет
+ * целиком без регистрации. Пароль демо-аккаунтов и так открыт в README.
+ */
+export const GUEST_EMAIL = "seller2@demo.artel";
+
+/** id гостевого пользователя или `null`, если демо-данные не загружены. */
+export async function guestUserId(): Promise<string | null> {
+  const user = await db().user.findUnique({ where: { email: GUEST_EMAIL }, select: { id: true } });
+  return user?.id ?? null;
+}

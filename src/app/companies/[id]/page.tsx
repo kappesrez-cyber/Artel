@@ -81,7 +81,7 @@ async function Company({ params }: Pick<PageProps<"/companies/[id]">, "params">)
             stats.averageRating === null ? (
               "—"
             ) : (
-              <span className="flex items-center gap-3">
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 {stats.averageRating} <Stars rating={stats.averageRating} />
               </span>
             )

@@ -2,17 +2,25 @@ import "server-only";
 import type { PlanTier } from "@/generated/prisma/client";
 
 /**
- * Тарифы предприятия. Всё, что тариф меняет, задаётся здесь: цена, комиссия платформы
- * с успешной сделки, бонусные звёзды, подъём позиций в поиске и помощь с документами.
+ * Тарифы предприятия (макет «Тарифы»: Старт, Про, Холдинг). Всё, что тариф меняет, задаётся
+ * здесь: цена, комиссия платформы с успешной сделки, пункты карточки, бонусные звёзды,
+ * подъём позиций в поиске и помощь с документами.
  */
 export type Plan = {
   tier: PlanTier;
   name: string;
   /** Цена за месяц в рублях. */
   price: number;
+  /** Для кого тариф — подпись под ценой. */
   tagline: string;
-  /** Комиссия платформы с суммы успешной сделки, в процентах. */
+  /**
+   * Комиссия платформы с суммы успешной сделки, в процентах: по ней считаются суммы.
+   * На карточке показывается `commissionLabel` (у Старта и Про — вилка, берём верхнюю границу).
+   */
   commission: number;
+  commissionLabel: string;
+  /** Пункты карточки: заголовок жирным и пояснение. */
+  perks: { title: string; text: string }[];
   /** Звёзды, которые зачисляются при оплате каждого месяца. */
   bonusStars: number;
   /**
@@ -23,17 +31,22 @@ export type Plan = {
   /** Юрист платформы готовит договор, спецификацию и закрывающие документы по сделке. */
   docsHelp: boolean;
   support: string;
-  /** Карточка выделена на странице тарифов как самая популярная. */
-  popular?: boolean;
 };
 
 export const plans: readonly Plan[] = [
   {
     tier: "FREE",
-    name: "Free",
+    name: "Старт",
     price: 0,
-    tagline: "Попробовать платформу: каталог, поиск, рынок заказов",
-    commission: 5,
+    tagline: "Бесплатно навсегда для заказчиков",
+    commission: 9,
+    commissionLabel: "8–9%",
+    perks: [
+      { title: "Заказчикам (АПК/Фудтех):", text: "бесплатно навсегда" },
+      { title: "Открытая витрина", text: "трендов и базовый профиль в каталоге." },
+      { title: "Тест для цехов:", text: "1 отклик в месяц (заказы до 300\u00a0000\u00a0₽)." },
+      { title: "Полный объём комиссии", text: "комиссии при продаже" },
+    ],
     bonusStars: 0,
     searchBoost: 0,
     docsHelp: false,
@@ -41,33 +54,42 @@ export const plans: readonly Plan[] = [
   },
   {
     tier: "PRO",
-    name: "Pro",
-    price: 2500,
-    tagline: "Для небольшого производства с регулярными сделками",
-    commission: 3,
-    bonusStars: 5,
-    searchBoost: 0.1,
-    docsHelp: false,
-    support: "Чат",
-  },
-  {
-    tier: "MAX",
-    name: "Max",
-    price: 7000,
-    tagline: "Для заводов, которые активно продают и закупают",
-    commission: 2,
+    name: "Про",
+    price: 27_000,
+    tagline: "Для цехов и производств",
+    commission: 5,
+    commissionLabel: "4–5%",
+    perks: [
+      {
+        title: "Полная аналитика спроса:",
+        text: "бюджеты пулов в рублях, динамика и целевые цены.",
+      },
+      { title: "Конструктор коллабораций:", text: "автосборка консорциумов под ваши станки." },
+      {
+        title: "Безлимитный доступ:",
+        text: "скачивание CAD-чертежей и отклики на любые объёмы.",
+      },
+    ],
     bonusStars: 20,
     searchBoost: 0.25,
     docsHelp: false,
     support: "Чат без очереди",
-    popular: true,
   },
   {
-    tier: "ULTRA",
-    name: "Ultra",
-    price: 35000,
-    tagline: "Крупные контракты под ключ: с документами помогает юрист платформы",
-    commission: 1,
+    tier: "HOLDING",
+    name: "Холдинг",
+    price: 149_000,
+    tagline: "Для холдингов с сетью филиалов",
+    commission: 0,
+    commissionLabel: "0%",
+    perks: [
+      { title: "Внутренний пулинг:", text: "синхронизация спроса 20–40 филиалов холдинга." },
+      { title: "Интеграция под ключ:", text: "бесшовный обмен с 1С:ERP / SAP и API к базе." },
+      {
+        title: "Закрытый пул исполнителей:",
+        text: "подрядчики с высшим скорингом и пищевой приёмкой.",
+      },
+    ],
     bonusStars: 100,
     searchBoost: 0.5,
     docsHelp: true,
@@ -82,7 +104,7 @@ export function getPlan(tier: PlanTier): Plan {
   return plans.find((p) => p.tier === tier)!;
 }
 
-/** Тариф, который действует сейчас: оплаченный срок истёк — значит Free. */
+/** Тариф, который действует сейчас: оплаченный срок истёк — значит Старт. */
 export function effectiveTier(
   org: { plan: PlanTier; planUntil: Date | null },
   now = new Date(),

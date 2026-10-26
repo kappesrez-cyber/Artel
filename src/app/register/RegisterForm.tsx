@@ -89,6 +89,13 @@ export function RegisterForm() {
       </fieldset>
 
       <SubmitButton pendingText="Создаём аккаунт…">Зарегистрироваться</SubmitButton>
+      <p className="text-center text-sm text-gray-500">
+        Хотите сначала посмотреть? Кнопка «Войти как гость (демо)» на странице{" "}
+        <Link href="/login" className="text-brand font-bold hover:opacity-80">
+          входа
+        </Link>
+        .
+      </p>
       <p className="text-center text-gray-600">
         Уже есть аккаунт?{" "}
         <Link href="/login" className="text-brand font-bold hover:opacity-80">

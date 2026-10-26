@@ -77,8 +77,8 @@ export function StatTile({
 }) {
   return (
     <div className="from-brand/[0.07] ring-brand/10 flex flex-col gap-1 rounded-3xl bg-linear-to-br to-white p-5 ring-1">
-      <span className="text-gray-500">{label}</span>
-      <span className="text-brand-dark text-4xl font-extrabold">{value}</span>
+      <span className="hyphens-auto text-gray-500">{label}</span>
+      <span className="text-brand-dark text-4xl font-extrabold max-sm:text-3xl">{value}</span>
       {hint && <span className="text-sm text-gray-500">{hint}</span>}
     </div>
   );

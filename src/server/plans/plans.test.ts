@@ -5,12 +5,11 @@ const day = 24 * 60 * 60 * 1000;
 const now = new Date("2026-10-18T12:00:00Z");
 
 describe("тарифы", () => {
-  it("четыре тарифа по возрастанию цены", () => {
+  it("три тарифа по возрастанию цены", () => {
     expect(plans.map((p) => [p.name, p.price])).toEqual([
-      ["Free", 0],
-      ["Pro", 2500],
-      ["Max", 7000],
-      ["Ultra", 35000],
+      ["Старт", 0],
+      ["Про", 27_000],
+      ["Холдинг", 149_000],
     ]);
   });
 
@@ -22,25 +21,26 @@ describe("тарифы", () => {
     }
   });
 
-  it("помощь с документами только на Ultra", () => {
-    expect(plans.filter((p) => p.docsHelp).map((p) => p.tier)).toEqual(["ULTRA"]);
+  it("помощь с документами только на Холдинге", () => {
+    expect(plans.filter((p) => p.docsHelp).map((p) => p.tier)).toEqual(["HOLDING"]);
   });
 
-  it("истёкший тариф считается Free", () => {
+  it("истёкший тариф считается Стартом", () => {
     expect(effectiveTier({ plan: "PRO", planUntil: new Date(now.getTime() + day) }, now)).toBe(
       "PRO",
     );
     expect(effectiveTier({ plan: "PRO", planUntil: new Date(now.getTime() - 1) }, now)).toBe(
       "FREE",
     );
-    expect(effectiveTier({ plan: "MAX", planUntil: null }, now)).toBe("FREE");
+    expect(effectiveTier({ plan: "HOLDING", planUntil: null }, now)).toBe("FREE");
   });
 
   it("комиссия считается по тарифу", () => {
-    expect(commissionFor("FREE", 2_000_000)).toBe(100_000);
-    expect(commissionFor("ULTRA", 2_000_000)).toBe(20_000);
-    expect(commissionFor("PRO", 333.33)).toBe(10);
-    expect(getPlan("MAX").popular).toBe(true);
+    expect(commissionFor("FREE", 2_000_000)).toBe(180_000);
+    expect(commissionFor("PRO", 2_000_000)).toBe(100_000);
+    expect(commissionFor("HOLDING", 2_000_000)).toBe(0);
+    expect(commissionFor("PRO", 333.33)).toBe(16.67);
+    expect(getPlan("HOLDING").name).toBe("Холдинг");
   });
 
   it("продление того же тарифа добавляет месяц к остатку, другой начинается сразу", () => {
@@ -48,7 +48,7 @@ describe("тарифы", () => {
     expect(nextPlanUntil({ plan: "PRO", planUntil: until }, "PRO", now).getTime()).toBe(
       until.getTime() + PLAN_DAYS * day,
     );
-    expect(nextPlanUntil({ plan: "PRO", planUntil: until }, "MAX", now).getTime()).toBe(
+    expect(nextPlanUntil({ plan: "PRO", planUntil: until }, "HOLDING", now).getTime()).toBe(
       now.getTime() + PLAN_DAYS * day,
     );
     expect(nextPlanUntil({ plan: "FREE", planUntil: null }, "PRO", now).getTime()).toBe(

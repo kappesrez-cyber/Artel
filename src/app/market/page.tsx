@@ -54,7 +54,7 @@ async function Orders({ searchParams }: Pick<PageProps<"/market">, "searchParams
         </Form>
         <nav
           aria-label="Сортировка"
-          className="bg-brand-mist flex gap-[calc(var(--u)*6)] rounded-[calc(var(--u)*16)] p-[calc(var(--u)*6)] max-md:rounded-xl max-md:p-1"
+          className="bg-brand-mist flex max-w-full gap-[calc(var(--u)*6)] overflow-x-auto overscroll-x-contain rounded-[calc(var(--u)*16)] p-[calc(var(--u)*6)] max-md:rounded-xl max-md:p-1"
         >
           {sorts.map(([value, label]) => (
             <Link

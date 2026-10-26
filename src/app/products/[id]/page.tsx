@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GuestLogin } from "@/components/GuestLogin";
 import { notFound } from "next/navigation";
 import { after, connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
@@ -62,15 +63,15 @@ async function Product({ params }: Pick<PageProps<"/products/[id]">, "params">) 
 
   const text = (
     <div className="flex min-w-0 flex-col gap-6">
-      <h1 className="text-4xl font-extrabold tracking-[-0.01em] text-gray-900 md:text-5xl">
+      <h1 className="text-4xl font-extrabold tracking-[-0.01em] break-words hyphens-auto text-gray-900 max-md:text-3xl md:text-5xl">
         {product.name}
       </h1>
       {product.description && <p className="text-lg text-gray-600">{product.description}</p>}
-      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-xl">
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-xl max-sm:gap-y-1 max-sm:text-lg sm:grid-cols-[auto_minmax(0,1fr)]">
         {facts.map(([label, value]) => (
           <div key={label} className="contents">
-            <dt className="text-gray-600">{label}</dt>
-            <dd className="font-bold">{value}</dd>
+            <dt className="text-gray-600 max-sm:mt-2 max-sm:text-base">{label}</dt>
+            <dd className="min-w-0 font-bold break-words">{value}</dd>
           </div>
         ))}
       </dl>
@@ -109,14 +110,15 @@ async function DealOffer({ product }: { product: ProductView }) {
   let body: ReactNode;
   if (!user?.organization) {
     body = (
-      <div className="flex flex-wrap items-center gap-4">
-        <p className="text-lg">Войдите от имени предприятия, чтобы предложить сделку.</p>
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="w-full text-lg">Войдите от имени предприятия, чтобы предложить сделку.</p>
         <Link
           href={`${routes.login}?next=${encodeURIComponent(`/products/${product.id}`)}`}
           className={buttonClass}
         >
           Войти
         </Link>
+        <GuestLogin next={`/products/${product.id}`} />
       </div>
     );
   } else if (user.organization.id === product.organization.id) {
