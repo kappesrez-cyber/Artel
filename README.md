@@ -283,4 +283,3 @@ curl -s -b jar -X POST localhost:3000/api/organizations/$ORG/products \
 При каждой сборке `npm run vercel-build` применяет миграции (`prisma migrate deploy`),
 обновляет демо-данные (`prisma db seed`, повторный запуск безопасен) и собирает приложение
 (см. `vercel.json`). В превью работают демо-аккаунты из раздела «Быстрый старт».
-

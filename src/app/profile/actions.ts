@@ -110,7 +110,7 @@ export async function dealAction(dealId: string, action: DealAction): Promise<Fo
   return { ok: true };
 }
 
-/** Тариф Ultra: юрист платформы готовит документы по сделке. */
+/** Тариф Холдинг: юрист платформы готовит документы по сделке. */
 export async function requestDealDocs(dealId: string): Promise<FormState> {
   const user = await requireOrganizationUser();
   try {

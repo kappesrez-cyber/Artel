@@ -60,7 +60,7 @@ export function OrderCard({ order }: { order: OrderCardView }) {
             Бюджет
           </span>
           {order.budget ? (
-            <p className="text-brand-navy text-[calc(var(--u)*38)] leading-none font-extrabold tracking-[-0.01em] whitespace-nowrap max-md:text-2xl">
+            <p className="text-brand-navy text-[calc(var(--u)*38)] leading-none font-extrabold tracking-[-0.01em] whitespace-nowrap max-md:text-xl">
               {formatPrice(order.budget)}
             </p>
           ) : (

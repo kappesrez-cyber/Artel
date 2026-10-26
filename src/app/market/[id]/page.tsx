@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { buttonClass, secondaryButtonClass } from "@/components/form";
+import { GuestLogin } from "@/components/GuestLogin";
+import { DisclosureIcon } from "@/components/icons";
 import { orderNeedKindLabels, orderRecurrenceLabels, plural } from "@/components/labels";
 import { companyHref, orderHref, productHref, routes } from "@/components/navigation";
 import { PhotoGallery } from "@/components/PhotoGallery";
@@ -74,10 +76,10 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
   const techFiles = order.attachments.filter((f) => f.kind === "TECHNICAL");
 
   return (
-    <article className="grid items-start gap-8 lg:grid-cols-[1fr_420px]">
+    <article className="grid min-w-0 grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="flex min-w-0 flex-col gap-6">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[calc(var(--u)*75)] leading-[1.1] font-extrabold tracking-[-0.01em] text-gray-900 max-md:text-3xl">
+          <h1 className="min-w-0 text-[calc(var(--u)*75)] leading-[1.1] font-extrabold tracking-[-0.01em] break-words hyphens-auto text-gray-900 max-md:text-3xl">
             {order.title}
           </h1>
           <StarCount stars={order.stars} className="text-xl" />
@@ -99,10 +101,10 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
               owner={isCustomer ? { orderId: order.id } : undefined}
             />
           )}
-          <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-xl">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-xl max-sm:gap-y-1 max-sm:text-lg sm:grid-cols-[auto_minmax(0,1fr)]">
             {facts.map(([label, value]) => (
               <div key={label} className="contents">
-                <dt className="text-gray-600">{label}</dt>
+                <dt className="text-gray-600 max-sm:mt-2 max-sm:text-base">{label}</dt>
                 <dd className="min-w-0 font-bold break-words">{value}</dd>
               </div>
             ))}
@@ -110,7 +112,9 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
         </div>
 
         <Collapsible title="Информация">
-          <p className="text-lg whitespace-pre-line text-gray-800">{order.description}</p>
+          <p className="text-lg break-words whitespace-pre-line text-gray-800">
+            {order.description}
+          </p>
           {details.length > 0 && (
             <dl className="grid gap-x-6 gap-y-2 text-lg sm:grid-cols-[auto_1fr]">
               {details.map(([label, value]) => (
@@ -141,7 +145,7 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
         </Collapsible>
       </div>
 
-      <aside className="flex flex-col gap-6 lg:sticky lg:top-6">
+      <aside className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-6">
         {isCustomer && order.status === "OPEN" && (
           <Suspense>
             <CatalogMatches order={order} />
@@ -172,10 +176,11 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
               <p className="text-gray-600">
                 Контакты и файлы видны предприятиям, которые вошли на платформу.
               </p>
-              <div>
+              <div className="flex flex-wrap gap-3">
                 <Link href={loginHref} className={buttonClass}>
                   Войти
                 </Link>
+                <GuestLogin next={orderHref(order.id)} />
               </div>
             </>
           )}
@@ -197,10 +202,11 @@ async function Order({ params }: Pick<PageProps<"/market/[id]">, "params">) {
               <Boost order={order} organizationId={viewer.id} isCustomer={isCustomer} />
             </Suspense>
           ) : (
-            <div>
+            <div className="flex flex-wrap gap-3">
               <Link href={loginHref} className={buttonClass}>
                 Войти, чтобы продвинуть
               </Link>
+              <GuestLogin next={orderHref(order.id)} />
             </div>
           )}
         </Card>
@@ -308,14 +314,9 @@ async function CatalogMatches({ order }: { order: OrderDetailView }) {
 function Collapsible({ title, children }: { title: string; children: ReactNode }) {
   return (
     <details open className="group flex flex-col gap-3">
-      <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
-        <h2 className={sectionTitle}>{title}</h2>
-        <span
-          aria-hidden
-          className="text-[calc(var(--u)*48)] leading-none transition-transform group-open:rotate-180 max-md:text-xl"
-        >
-          ∨
-        </span>
+      <summary className="flex cursor-pointer list-none items-center gap-3 max-md:justify-between [&::-webkit-details-marker]:hidden">
+        <h2 className={`${sectionTitle} min-w-0 break-words`}>{title}</h2>
+        <DisclosureIcon />
       </summary>
       <div className="mt-3 flex flex-col gap-3">{children}</div>
     </details>

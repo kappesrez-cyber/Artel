@@ -102,10 +102,10 @@ async function main() {
 
   const productIds = await ensureProducts(sellerId, obnalProducts);
   await ensureProducts(seller2Id, techmashProducts);
-  // Второй продавец на тарифе Max: видно бейдж, комиссию 2% и подъём в поиске.
+  // Второй продавец на тарифе Про: видно бейдж, комиссию 5% и подъём в поиске.
   await db().organization.updateMany({
     where: { id: seller2Id, plan: "FREE" },
-    data: { plan: "MAX", planUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+    data: { plan: "PRO", planUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
   });
   const products = obnalProducts;
 

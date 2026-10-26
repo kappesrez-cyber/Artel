@@ -38,6 +38,8 @@
 }
 
 body {
+  /* Длинные слова и названия переносятся, а не растягивают страницу на телефоне. */
+  overflow-wrap: break-word;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -126,4 +128,10 @@ body {
   to {
     transform: translateY(300%);
   }
+}
+
+/* Крупные заголовки с длинными названиями («АО «Уралподшипник»») при увеличенном шрифте
+   телефона переносятся внутри слова, а не вылезают за экран. */
+h1 {
+  overflow-wrap: anywhere;
 }
