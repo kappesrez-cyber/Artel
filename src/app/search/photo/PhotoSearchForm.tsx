@@ -286,7 +286,7 @@ export function PhotoSearchForm() {
                 key={name}
                 href={demoDir + name}
                 download
-                className="text-brand mr-2 font-bold whitespace-nowrap hover:opacity-80"
+                className="text-brand mr-2 inline-block font-bold whitespace-nowrap hover:opacity-80"
               >
                 {example.name.toLowerCase()} {i + 1}
               </a>

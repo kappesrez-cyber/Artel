@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, type ReactNode } from "react";
+import { loginAsGuest } from "@/app/login/actions";
 import { placeOrder } from "@/app/orders/new/actions";
 import { FileDrop } from "./FileDrop";
 import {
@@ -310,6 +311,23 @@ export function SearchDetails({
                 >
                   Войти и разместить заказ
                 </Link>
+              )}
+              {!viewer && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (formRef.current) saveDraft(formRef.current);
+                    try {
+                      sessionStorage.setItem(REOPEN_KEY, "1");
+                    } catch {}
+                    const form = new FormData();
+                    form.set("next", routes.home);
+                    void loginAsGuest(form);
+                  }}
+                  className={secondaryButtonClass}
+                >
+                  Войти как гость (демо)
+                </button>
               )}
               <button type="button" onClick={searchWithDetails} className={secondaryButtonClass}>
                 Найти с учётом артикула

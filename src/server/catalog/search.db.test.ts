@@ -151,11 +151,11 @@ describe.skipIf(!enabled)("поиск по каталогу (PostgreSQL)", async
       const { ids: found } = await rankProducts(`шкив ${tag}`, 10);
       return [found.indexOf(twinA.id), found.indexOf(twinB.id)];
     };
-    // Без тарифов выше b (у него отзыв из прошлого теста); Ultra у a перевешивает отзыв.
+    // Без тарифов выше b (у него отзыв из прошлого теста); Холдинг у a перевешивает отзыв.
     const day = 24 * 60 * 60 * 1000;
     await db().organization.update({
       where: { id: a! },
-      data: { plan: "ULTRA", planUntil: new Date(Date.now() + day) },
+      data: { plan: "HOLDING", planUntil: new Date(Date.now() + day) },
     });
     const [withPlanA, withPlanB] = await rank();
     expect(withPlanA).toBeLessThan(withPlanB!);

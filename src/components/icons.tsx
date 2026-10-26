@@ -205,3 +205,26 @@ export function SparkleIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+/**
+ * Значок раскрытия раздела (`<details>`): шеврон в круге, смотрит вниз у свёрнутого раздела
+ * и поворачивается вверх у раскрытого. Родитель `<details>` должен иметь класс `group`.
+ */
+export function DisclosureIcon({ className = "" }: IconProps) {
+  return (
+    <span
+      aria-hidden
+      className={`bg-brand-mist text-brand-dark grid size-10 shrink-0 place-items-center rounded-full transition-[transform,background-color] duration-300 group-open:rotate-180 group-hover:bg-[#dfe6f6] max-md:size-8 ${className}`}
+    >
+      <svg viewBox="0 0 24 24" fill="none" className="size-5 max-md:size-4">
+        <path
+          d="M6 9l6 6 6-6"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}

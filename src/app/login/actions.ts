@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import type { FormState } from "@/components/form-state";
-import { authenticate, registerAccount } from "@/server/auth/accounts";
+import { authenticate, guestUserId, registerAccount } from "@/server/auth/accounts";
 import { endSession, startSession } from "@/server/auth/session";
 import { checkbox, formFields, safeNext, toFormState } from "@/server/forms";
 
@@ -15,6 +15,14 @@ export async function login(_prev: FormState, form: FormData): Promise<FormState
     return { ...toFormState(error), values };
   }
   if (!userId) return { error: "Неверный email или пароль", values };
+  await startSession(userId);
+  redirect(safeNext(form.get("next"), "/profile"));
+}
+
+/** «Войти как гость (демо)»: сессия демо-предприятия без пароля, затем туда, откуда пришли. */
+export async function loginAsGuest(form: FormData): Promise<void> {
+  const userId = await guestUserId();
+  if (!userId) redirect("/register");
   await startSession(userId);
   redirect(safeNext(form.get("next"), "/profile"));
 }
