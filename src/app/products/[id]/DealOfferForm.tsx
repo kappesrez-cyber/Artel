@@ -19,19 +19,21 @@ export function DealOfferForm({ productId }: { productId: string }) {
         required
         defaultValue={v.quantity ?? "1"}
         state={state}
-        className="max-w-48"
       />
       <TextArea
         label="Комментарий для производителя"
         name="comment"
-        rows={3}
+        rows={2}
         placeholder="Сроки, доставка, требования к документам"
         defaultValue={v.comment}
         state={state}
       />
-      <div>
-        <SubmitButton pendingText="Отправляем…">Предложить сделку</SubmitButton>
-      </div>
+      <SubmitButton
+        pendingText="Отправляем…"
+        className="bg-brand-dark hover:bg-brand-navy inline-flex w-full cursor-pointer items-center justify-center rounded-full py-3 text-base font-bold text-white transition-colors disabled:opacity-50"
+      >
+        Предложить сделку
+      </SubmitButton>
     </form>
   );
 }
