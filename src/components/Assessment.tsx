@@ -42,6 +42,34 @@ export function VerdictBadge({
   );
 }
 
+const dotTones: Record<Tone, string> = {
+  RELIABLE: "bg-brand-dark",
+  GOOD: "bg-brand",
+  CAUTION: "bg-amber-400",
+  RISK: "bg-red-600",
+};
+
+/** Итог сводки одной строкой с цветной точкой — для превью карточки, без плашки. */
+export function VerdictLine({
+  verdict,
+  tone,
+  className = "",
+}: {
+  verdict: string;
+  tone: Tone;
+  className?: string;
+}) {
+  return (
+    <span
+      title="Итог ИИ-сводки о производителе"
+      className={`inline-flex min-w-0 items-center gap-2 ${tone === "RISK" ? "text-red-700" : "text-gray-600"} ${className}`}
+    >
+      <span aria-hidden className={`size-2 shrink-0 rounded-full ${dotTones[tone]}`} />
+      <span className="truncate">{verdict}</span>
+    </span>
+  );
+}
+
 /** Индекс доверия кольцом: 0–100. */
 export function ScoreRing({
   score,

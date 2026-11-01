@@ -11,7 +11,7 @@ import { ModeSwitch, ModeSwitchView } from "./ModeSwitch";
 import { routes, secondaryNav } from "./navigation";
 
 const navLink =
-  "rounded-[calc(var(--u)*16)] px-[calc(var(--u)*8)] whitespace-nowrap transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-white";
+  "rounded-lg px-1 whitespace-nowrap transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-white";
 
 const menuLink =
   "flex items-center justify-between rounded-2xl px-4 py-3 transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white";
@@ -22,17 +22,17 @@ const menuLink =
  */
 export function SiteHeader() {
   return (
-    <header className="relative z-30 px-[calc(var(--u)*40)] pt-[calc(var(--u)*35)] max-lg:px-3 max-lg:pt-3">
+    <header className="relative z-30 px-6 pt-4 max-lg:px-3 max-lg:pt-3">
       <nav
         aria-label="Основное меню"
-        className="bg-brand-dark flex flex-wrap items-center rounded-[calc(var(--u)*31)] bg-[linear-gradient(180deg,rgb(255_255_255/0.08),rgb(255_255_255/0)_55%)] pr-[calc(var(--u)*17)] pl-[calc(var(--u)*14)] leading-none font-bold tracking-[-0.04em] text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.2),inset_0_-1px_0_rgb(0_0_0/0.08),var(--shadow-lift)] max-lg:gap-x-2 max-lg:gap-y-2.5 max-lg:rounded-3xl max-lg:p-2.5 max-lg:pl-4 lg:h-[calc(var(--u)*124)] lg:flex-nowrap lg:gap-[calc(var(--u)*28)] lg:text-[calc(var(--u)*44)]"
+        className="bg-brand-dark flex flex-wrap items-center rounded-2xl pr-2 pl-5 leading-none font-bold tracking-[-0.01em] text-white max-lg:gap-x-2 max-lg:gap-y-2.5 max-lg:rounded-3xl max-lg:p-2.5 max-lg:pl-4 lg:h-16 lg:flex-nowrap lg:gap-6 lg:text-base"
       >
         <Link
           href={routes.home}
           aria-label="Artel — на главную"
           className="shrink-0 rounded-[calc(var(--u)*16)] focus-visible:outline-2 focus-visible:outline-white max-lg:mr-auto"
         >
-          <Logo tone="white" className="h-[calc(var(--u)*80)] w-auto max-lg:h-9" />
+          <Logo tone="white" className="h-9 w-auto" />
         </Link>
 
         <div className="shrink-0 max-lg:order-last max-lg:basis-full">
@@ -41,7 +41,7 @@ export function SiteHeader() {
           </Suspense>
         </div>
 
-        <ul className="flex items-center gap-[calc(var(--u)*44)] max-lg:hidden lg:flex-1">
+        <ul className="flex items-center gap-7 max-lg:hidden lg:flex-1">
           {secondaryNav.map((item, i) => (
             <li key={item.href} className={i === 0 ? "lg:ml-auto" : undefined}>
               <Link href={item.href} className={navLink}>
@@ -168,14 +168,12 @@ function Avatar({
       href={href}
       aria-label={label}
       title={label}
-      className="bg-brand relative grid size-[calc(var(--u)*105)] shrink-0 place-items-center rounded-full border-[calc(var(--u)*11)] border-white/70 shadow-[var(--shadow-soft)] transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white max-lg:size-11 max-lg:border-[3px]"
+      className="bg-brand relative grid size-11 shrink-0 place-items-center rounded-full border-[3px] border-white/70 transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
     >
       {initials ? (
-        <span className="text-[calc(var(--u)*36)] font-extrabold tracking-normal text-white max-lg:text-sm">
-          {initials}
-        </span>
+        <span className="text-sm font-extrabold tracking-normal text-white">{initials}</span>
       ) : (
-        <span className="bg-brand-gray size-[calc(var(--u)*43)] rounded-full max-lg:size-4" />
+        <span className="bg-brand-gray size-4 rounded-full" />
       )}
       {guest && (
         <span className="text-brand-dark absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-300 px-1.5 py-0.5 text-[10px] leading-none font-extrabold tracking-normal uppercase">
