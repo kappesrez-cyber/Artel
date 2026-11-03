@@ -95,7 +95,7 @@ export async function getOrganizationStats(id: string): Promise<OrganizationStat
   };
 }
 
-/** Публичная страница предприятия: профиль, репутация, открытые документы и отзывы. */
+/** Публичная страница предприятия: профиль, репутация, документы и отзывы. */
 export async function getPublicProfile(id: string) {
   const organization = await db().organization.findUnique({
     where: { id },
@@ -104,7 +104,6 @@ export async function getPublicProfile(id: string) {
       plan: true,
       planUntil: true,
       documents: {
-        where: { isPublic: true },
         orderBy: [{ kind: "asc" }, { createdAt: "desc" }],
         select: {
           id: true,

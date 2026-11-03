@@ -133,8 +133,6 @@ model OrganizationDocument {
   issuedAt       DateTime?    @db.Date
   validUntil     DateTime?    @db.Date
   url            String?
-  /// Виден ли документ на публичной странице предприятия.
-  isPublic       Boolean      @default(true)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 

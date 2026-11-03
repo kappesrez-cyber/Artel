@@ -9,11 +9,7 @@ import { createProduct, updateProduct } from "@/server/catalog/products";
 import { changeDealStatus, leaveReview, requestDocsHelp } from "@/server/deals/deals";
 import type { DealAction } from "@/server/deals/transitions";
 import { checkbox, formFields, toFormState } from "@/server/forms";
-import {
-  addDocument,
-  deleteDocument,
-  setDocumentVisibility,
-} from "@/server/organizations/documents";
+import { addDocument, deleteDocument } from "@/server/organizations/documents";
 import { removeOrganizationLogo, setOrganizationLogo } from "@/server/organizations/logo";
 import { updateOrganization } from "@/server/organizations/organizations";
 
@@ -39,18 +35,12 @@ export async function addCompanyDocument(_prev: FormState, form: FormData): Prom
   const user = await requireOrganizationUser();
   const values = formFields(form);
   try {
-    await addDocument(user.organization.id, { ...values, isPublic: checkbox(form, "isPublic") });
+    await addDocument(user.organization.id, values);
   } catch (error) {
     return { ...toFormState(error), values };
   }
   refresh();
   return { ok: true, message: "Документ добавлен" };
-}
-
-export async function toggleDocument(documentId: string, isPublic: boolean): Promise<void> {
-  const user = await requireOrganizationUser();
-  await setDocumentVisibility(user.organization.id, documentId, isPublic);
-  refresh();
 }
 
 export async function removeDocument(documentId: string): Promise<void> {

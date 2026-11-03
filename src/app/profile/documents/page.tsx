@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { dangerButtonClass, secondaryButtonClass } from "@/components/form";
+import { dangerButtonClass } from "@/components/form";
 import { documentKindLabels } from "@/components/labels";
 import { requireOrganizationUser } from "@/server/auth/access";
 import { formatDate } from "@/server/catalog/format";
 import { listDocuments } from "@/server/organizations/documents";
-import { removeDocument, toggleDocument } from "../actions";
+import { removeDocument } from "../actions";
 import { Badge, Card, Empty, PageFallback, Section } from "@/components/ui";
 import { DocumentForm } from "./DocumentForm";
 
@@ -18,6 +18,9 @@ async function Documents() {
   return (
     <div className="flex flex-col gap-10">
       <Section title="Документы и отчёты">
+        <p className="text-sm text-gray-600">
+          Все документы видны на публичной странице предприятия.
+        </p>
         {documents.length === 0 ? (
           <Empty>
             Здесь будут регистрационные документы, сертификаты, лицензии и отчётность предприятия.
@@ -52,27 +55,17 @@ async function Documents() {
                           .filter(Boolean)
                           .join(" · ")}
                       </span>
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {doc.isPublic ? (
-                          <Badge tone="solid">Виден всем</Badge>
-                        ) : (
-                          <Badge>Только для вас</Badge>
-                        )}
-                        {expired && <Badge tone="red">Истёк срок</Badge>}
-                      </div>
+                      {expired && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <Badge tone="red">Истёк срок</Badge>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex gap-2">
-                      <form action={toggleDocument.bind(null, doc.id, !doc.isPublic)}>
-                        <button type="submit" className={secondaryButtonClass}>
-                          {doc.isPublic ? "Скрыть" : "Показать"}
-                        </button>
-                      </form>
-                      <form action={removeDocument.bind(null, doc.id)}>
-                        <button type="submit" className={dangerButtonClass}>
-                          Удалить
-                        </button>
-                      </form>
-                    </div>
+                    <form action={removeDocument.bind(null, doc.id)}>
+                      <button type="submit" className={dangerButtonClass}>
+                        Удалить
+                      </button>
+                    </form>
                   </Card>
                 </li>
               );
