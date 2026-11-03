@@ -21,3 +21,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Orders (market) go through `src/server/orders`; star balance changes only in `src/server/stars/stars.ts` (atomic, CHECK >= 0). Payments: `PaymentProvider` in `src/server/stars/payments.ts`, `stub` for now.
 - Don't build className strings from constants exported by `"use client"` files (`${buttonClass} …`) in Server Components: they arrive as client references, not strings.
 - Preview deploys: Vercel + Neon, build command `npm run vercel-build` (migrate, seed, build). Demo logins are in README.
+- Amvera (RU hosting): `amvera.yml` + `Dockerfile`; env vars are not available at build, so `scripts/docker-start.sh` runs migrate + seed at container start. Keep build DB-free.
