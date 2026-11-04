@@ -343,8 +343,8 @@ export const existingCompanyChecks: Record<
     foundedYear?: number;
   }
 > = {
-  "ООО Обнал": {
-    logo: "obnal.png",
+  "ООО «МеталлАгро»": {
+    logo: "metallagro.png",
     verified: true,
     external: {
       facts: [

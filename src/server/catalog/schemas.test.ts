@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { productInputSchema, productUpdateSchema } from "./schemas";
 
-const valid = { name: "Деталь", price: 1000000, leadTimeDays: 7, city: "Анкоридж" };
+const valid = { name: "Вал приводной", price: 1000000, leadTimeDays: 7, city: "Воронеж" };
 
 describe("productInputSchema", () => {
   it("принимает позицию и по умолчанию делает черновик", () => {

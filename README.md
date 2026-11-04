@@ -42,12 +42,15 @@ cp .env.example .env     # переменные окружения
 npm install              # зависимости (+ генерация Prisma Client)
 npm run db:start         # локальная PostgreSQL в фоне (порты 51213–51215)
 npm run db:deploy        # применить миграции
-npm run db:seed          # демо-данные: два предприятия, позиция, сделки, отзывы
+npm run db:seed          # демо-данные: ~80 производителей, ~90 позиций, ~80 заказов, сделки, отзывы
 npm run dev              # http://localhost:3000
 ```
 
-Поиск: введите «деталь» на главной или откройте <http://localhost:3000/search?q=деталь>.
-Вход в демо-аккаунты: `seller@demo.artel` (продавец «ООО Обнал»), `seller2@demo.artel`
+Поиск: введите «подшипник» на главной или откройте <http://localhost:3000/search?q=плуг>.
+Поиск по фото: <http://localhost:3000/search/photo>, примеры «Подшипник», «Гидрофильтр» и
+«Плуг для трактора». Снимки примеров лежат в `public/demo/photo-search/`; после замены файлов
+пересчитайте отпечатки: `node scripts/photo-search-fingerprints.mjs`.
+Вход в демо-аккаунты: `seller@demo.artel` (продавец «ООО «МеталлАгро»), `seller2@demo.artel`
 (продавец «ООО Техмаш-Юг») и `buyer@demo.artel` (покупатель «АО Агрохолдинг «Заря»»),
 пароль `artel-demo`. Или зарегистрируйте своё
 предприятие на <http://localhost:3000/register>.

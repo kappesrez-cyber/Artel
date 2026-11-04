@@ -14,15 +14,8 @@ export type DemoProduct = {
   photos?: string[];
 };
 
-/** Позиции «ООО Обнал» (Анкоридж): металлообработка для сельхозтехники. */
-export const obnalProducts: DemoProduct[] = [
-  {
-    name: "Деталь",
-    price: "1000000",
-    leadTimeDays: 7, // 1 неделя
-    city: "Анкоридж",
-    status: "PUBLISHED",
-  },
+/** Позиции «ООО «МеталлАгро» (Воронеж), демо-продавца: металлообработка для сельхозтехники. */
+export const demoSellerProducts: DemoProduct[] = [
   {
     name: "Подшипник шариковый радиальный 6205-2RS",
     article: "ПШ-6205-2RS",
@@ -31,7 +24,7 @@ export const obnalProducts: DemoProduct[] = [
       "Закрытый подшипник с двусторонним резиновым уплотнением. 25×52×15 мм, класс точности 0 по ГОСТ 520-2011. Для приводов жаток и транспортёров комбайнов.",
     price: "450",
     leadTimeDays: 14,
-    city: "Анкоридж",
+    city: "Воронеж",
     status: "PUBLISHED",
   },
   {
@@ -42,7 +35,7 @@ export const obnalProducts: DemoProduct[] = [
       "Вал привода мотовила для жаток комбайнов Claas Lexion 760. Сталь 40Х, закалка ТВЧ.",
     price: "38500",
     leadTimeDays: 21,
-    city: "Анкоридж",
+    city: "Воронеж",
     status: "PUBLISHED",
   },
   {
@@ -52,7 +45,7 @@ export const obnalProducts: DemoProduct[] = [
     description: "Однорядная роликовая цепь шаг 25,4 мм для транспортёров и элеваторов.",
     price: "5200",
     leadTimeDays: 10,
-    city: "Анкоридж",
+    city: "Воронеж",
     status: "PUBLISHED",
   },
   {
@@ -62,7 +55,7 @@ export const obnalProducts: DemoProduct[] = [
     description: "Гидроцилиндр двустороннего действия, ход 400 мм, давление до 20 МПа.",
     price: "27000",
     leadTimeDays: 30,
-    city: "Анкоридж",
+    city: "Воронеж",
     status: "DRAFT",
   },
 ];

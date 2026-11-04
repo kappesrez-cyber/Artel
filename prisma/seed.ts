@@ -1,6 +1,8 @@
 // Демо-данные: `npm run db:seed`. Повторный запуск ничего не дублирует.
 // Позиции и аккаунты создаются тем же слоем данных, что и на сайте.
 import "dotenv/config";
+import type { Prisma } from "@/generated/prisma/client";
+import { isJunkText } from "./junk";
 import { hashPassword } from "@/server/auth/password";
 import { createProduct, listOrganizationProducts, updateProduct } from "@/server/catalog/products";
 import { db } from "@/server/db";
@@ -10,13 +12,16 @@ import { boostOrder } from "@/server/stars/stars";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { refreshAssessment } from "@/server/assessment/assessment";
-import { obnalProducts, techmashProducts, type DemoProduct } from "./demo-catalog";
+import { randomUUID } from "node:crypto";
+import { demoSellerProducts, techmashProducts, type DemoProduct } from "./demo-catalog";
 import {
   demoCompanies,
   demoCustomers,
   existingCompanyChecks,
   type DemoCompany,
 } from "./demo-companies";
+import { demoBuyers, demoOrders } from "./demo-orders";
+import { demoSellers, sellerProfile } from "./demo-sellers";
 
 /** Пароль обоих демо-аккаунтов. Данные демонстрационные, секрета в них нет. */
 const DEMO_PASSWORD = "artel-demo";
@@ -24,13 +29,13 @@ const DEMO_PASSWORD = "artel-demo";
 const seller = {
   user: { email: "seller@demo.artel", name: "Демо-продавец" },
   organization: {
-    name: "ООО Обнал",
-    city: "Анкоридж",
+    name: "ООО «МеталлАгро»",
+    city: "Воронеж",
     inn: "7700000001",
     description:
       "Производство металлических деталей и узлов для сельхозтехники. Токарная и фрезерная обработка, термообработка, серийные партии от 10 штук.",
     phone: "+7 900 000-00-01",
-    email: "sales@obnal.example",
+    email: "sales@metallagro.example",
     foundedYear: 2012,
     isSeller: true,
     isBuyer: true,
@@ -77,7 +82,7 @@ async function ensureAccount({ user, organization }: Account) {
     await updateOrganization(orgId, organization);
     return orgId;
   }
-  // Раньше сид создавал «ООО Обнал» без владельца — подхватываем его.
+  // Раньше сид создавал демо-продавца без владельца — подхватываем его.
   const orphan = await db().organization.findFirst({
     where: { name: organization.name, memberships: { none: {} } },
     select: { id: true },
@@ -100,14 +105,15 @@ async function main() {
   const buyerId = await ensureAccount(buyer);
   const seller2Id = await ensureAccount(seller2);
 
-  const productIds = await ensureProducts(sellerId, obnalProducts);
+  await removeJunk(sellerId);
+  const productIds = await ensureProducts(sellerId, demoSellerProducts);
   await ensureProducts(seller2Id, techmashProducts);
   // Второй продавец на тарифе Про: видно бейдж, комиссию 5% и подъём в поиске.
   await db().organization.updateMany({
     where: { id: seller2Id, plan: "FREE" },
     data: { plan: "PRO", planUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
   });
-  const products = obnalProducts;
+  const products = demoSellerProducts;
 
   if ((await db().organizationDocument.count({ where: { organizationId: sellerId } })) === 0) {
     await db().organizationDocument.createMany({
@@ -138,7 +144,7 @@ async function main() {
         buyerId,
         productId: productIds[0],
         title: products[0].name,
-        quantity: 2,
+        quantity: 200,
         unitPrice: products[0].price,
         status: "COMPLETED",
         createdAt: new Date(Date.now() - 24 * 86_400_000),
@@ -153,7 +159,7 @@ async function main() {
           authorOrganizationId: buyerId,
           targetOrganizationId: sellerId,
           rating: 5,
-          text: "Сделали точно в срок, документы в порядке. Деталь встала без доработки.",
+          text: "Сделали точно в срок, документы в порядке. Подшипники встали без доработки.",
         },
         {
           dealId: completed.id,
@@ -170,7 +176,7 @@ async function main() {
         buyerId,
         productId: productIds[0],
         title: products[0].name,
-        quantity: 5,
+        quantity: 500,
         unitPrice: products[0].price,
         comment: "Нужна партия к посевной, доставка в Краснодар.",
       },
@@ -180,7 +186,9 @@ async function main() {
   await seedMarket(sellerId, buyerId);
   await seedAnalytics(sellerId, seller2Id, buyerId);
   await seedSeller2Deals(seller2Id, buyerId);
-  await seedDemoCompanies(buyerId);
+  const customerIds = await seedDemoCompanies(buyerId);
+  await seedDemoOrders(customerIds);
+  await seedCatalogQueries(customerIds);
 
   console.log(
     `Сид: «${seller.organization.name}», «${seller2.organization.name}» и «${buyer.organization.name}». ` +
@@ -189,26 +197,36 @@ async function main() {
 }
 
 /**
- * Демо-производители с разной репутацией, их логотипы и ИИ-сводки. Предприятия и позиции
- * обновляются при каждом запуске, история сделок и документы создаются один раз.
+ * Демо-производители с разной репутацией, их логотипы и ИИ-сводки, плюс расширенный
+ * ассортимент (`demo-sellers.ts`). Предприятия и позиции обновляются при каждом запуске,
+ * история сделок и документы создаются один раз. Возвращает id заказчиков: Заря и демо-заказчики.
  */
-async function seedDemoCompanies(buyerId: string) {
+async function seedDemoCompanies(buyerId: string): Promise<string[]> {
   const customerIds = [buyerId];
-  for (const customer of demoCustomers) {
+  for (const customer of [...demoCustomers, ...demoBuyers]) {
     const found = await db().organization.findUnique({ where: { inn: customer.inn } });
     customerIds.push(
       found?.id ?? (await createOrganization({ ...customer, isSeller: false, isBuyer: true })).id,
     );
   }
 
-  const companies: { id: string; logo: string; company: Partial<DemoCompany> }[] = [];
-  for (const company of demoCompanies) {
-    const found = await db().organization.findUnique({ where: { inn: company.organization.inn } });
+  const companies: { id: string; logo?: string; company: Partial<DemoCompany> }[] = [];
+  const upsert = async (organization: DemoCompany["organization"], products: DemoProduct[]) => {
+    const found = await db().organization.findUnique({ where: { inn: organization.inn } });
     const id = found
-      ? (await updateOrganization(found.id, company.organization)).id
-      : (await createOrganization(company.organization)).id;
-    await ensureProducts(id, company.products);
+      ? (await updateOrganization(found.id, organization)).id
+      : (await createOrganization(organization)).id;
+    await ensureProducts(id, products);
+    return id;
+  };
+  for (const company of demoCompanies) {
+    const id = await upsert(company.organization, company.products);
     companies.push({ id, logo: company.logo, company });
+  }
+  for (const [i, seller] of demoSellers.entries()) {
+    const company = sellerProfile(seller, i);
+    const id = await upsert(company.organization, company.products);
+    companies.push({ id, company });
   }
   for (const [name, extra] of Object.entries(existingCompanyChecks)) {
     const found = await db().organization.findFirst({ where: { name }, select: { id: true } });
@@ -242,18 +260,21 @@ async function seedDemoCompanies(buyerId: string) {
       });
     }
     if (company.reputation) await seedReputation(id, customerIds, company.reputation);
-    const data = readFileSync(join(import.meta.dirname, "demo-logos", logo));
-    await db().organizationLogo.upsert({
-      where: { organizationId: id },
-      create: { organizationId: id, mimeType: "image/png", size: data.byteLength, data },
-      update: {},
-    });
+    if (logo) {
+      const data = readFileSync(join(import.meta.dirname, "demo-logos", logo));
+      await db().organizationLogo.upsert({
+        where: { organizationId: id },
+        create: { organizationId: id, mimeType: "image/png", size: data.byteLength, data },
+        update: {},
+      });
+    }
     await refreshAssessment(id, company.external ?? {});
   }
   // Остальным — сводка только по данным платформы.
   for (const { id } of await db().organization.findMany({ select: { id: true } })) {
     if (!companies.some((c) => c.id === id)) await refreshAssessment(id);
   }
+  return customerIds;
 }
 
 /** История сделок производителя с демо-заказчиками за последние два года. Один раз. */
@@ -278,39 +299,129 @@ async function seedReputation(
       Math.floor(((i + 0.5) * total) / Math.max(1, spec.cancelled)),
     ),
   );
+  // Заказчики у каждого производителя свои: сдвиг по id, чтобы не у всех был один и тот же.
+  const shift = [...sellerId].reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  const deals: Prisma.DealCreateManyInput[] = [];
+  const reviews: Prisma.ReviewCreateManyInput[] = [];
+  let n = 0;
   for (let i = 0; i < total; i++) {
     const product = products[i % products.length]!;
-    const buyerId = customers[i % customers.length]!;
+    const buyerId = customers[(i + shift) % customers.length]!;
     const createdAt = new Date(Date.now() - Math.round(((total - i) / total) * 700 + 12) * day);
     const cancelled = cancelledAt.has(i);
-    const deal = await db().deal.create({
-      data: {
-        sellerId,
-        buyerId,
-        productId: product.id,
-        title: product.name,
-        quantity: 20 + ((i * 37) % 400),
-        unitPrice: product.price,
-        status: cancelled ? "CANCELLED" : "COMPLETED",
-        createdAt,
-        acceptedAt: new Date(createdAt.getTime() + day),
-        completedAt: cancelled ? null : new Date(createdAt.getTime() + 9 * day),
-        cancelledAt: cancelled ? new Date(createdAt.getTime() + 20 * day) : null,
-      },
+    const id = randomUUID();
+    deals.push({
+      id,
+      sellerId,
+      buyerId,
+      productId: product.id,
+      title: product.name,
+      quantity: 20 + ((i * 37) % 400),
+      unitPrice: product.price,
+      status: cancelled ? "CANCELLED" : "COMPLETED",
+      createdAt,
+      acceptedAt: new Date(createdAt.getTime() + day),
+      completedAt: cancelled ? null : new Date(createdAt.getTime() + 9 * day),
+      cancelledAt: cancelled ? new Date(createdAt.getTime() + 20 * day) : null,
     });
     if (!cancelled) {
-      const n = i - [...cancelledAt].filter((c) => c < i).length;
-      await db().review.create({
-        data: {
-          dealId: deal.id,
-          authorOrganizationId: buyerId,
-          targetOrganizationId: sellerId,
-          rating: spec.ratings[n % spec.ratings.length]!,
-          text: spec.reviews[n % spec.reviews.length]!,
-          createdAt: new Date(createdAt.getTime() + 10 * day),
-        },
+      reviews.push({
+        dealId: id,
+        authorOrganizationId: buyerId,
+        targetOrganizationId: sellerId,
+        rating: spec.ratings[n % spec.ratings.length]!,
+        text: spec.reviews[n % spec.reviews.length]!,
+        createdAt: new Date(createdAt.getTime() + 10 * day),
       });
+      n++;
     }
+  }
+  await db().deal.createMany({ data: deals });
+  await db().review.createMany({ data: reviews });
+}
+
+/**
+ * Заказы демо-заказчиков на рынке (`demo-orders.ts`). Заказ с тем же названием у того же
+ * заказчика не создаётся второй раз, поэтому новые заказы из списка добавляются и в старую базу.
+ */
+async function seedDemoOrders(customerIds: string[]) {
+  const buyers = customerIds.slice(1 + demoCustomers.length);
+  const day = 86_400_000;
+  for (const [i, order] of demoOrders.entries()) {
+    const customerId = buyers[order.buyer];
+    if (!customerId) continue;
+    if (
+      await db().order.findFirst({
+        where: { customerId, title: order.title },
+        select: { id: true },
+      })
+    )
+      continue;
+    const createdAt = new Date(Date.now() - ((i * 13) % 28) * day - ((i * 7) % 20) * 3_600_000);
+    const contact = demoBuyers[order.buyer]!;
+    await db().order.create({
+      data: {
+        customerId,
+        title: order.title,
+        description: order.description,
+        specification: order.specification ?? null,
+        quantity: order.quantity,
+        unit: order.unit ?? "шт.",
+        budget: order.budget ?? null,
+        deadline: order.deadlineDays ? new Date(Date.now() + order.deadlineDays * day) : null,
+        city: contact.city,
+        needKind: order.needKind,
+        originalBrand: order.original?.[0] ?? null,
+        originalArticle: order.original?.[1] ?? null,
+        application: order.application ?? null,
+        industry: order.industry,
+        analogAllowed: order.needKind === "IMPORT_REPLACEMENT",
+        recurrence: order.recurrence ?? "ONCE",
+        requiredDocuments:
+          order.industry === "Пищевая промышленность"
+            ? ["Сертификат соответствия", "Декларация ХАССП"]
+            : ["Паспорт качества"],
+        contactName: "Отдел снабжения",
+        contactPhone: `+7 900 ${String(300 + order.buyer).padStart(3, "0")}-00-${String(10 + order.buyer).padStart(2, "0")}`,
+        stars: order.stars ?? 0,
+        createdAt,
+        ...(order.stars && {
+          boosts: { create: { organizationId: customerId, stars: order.stars, createdAt } },
+        }),
+      },
+    });
+  }
+}
+
+/**
+ * Убрать мусор: старое название демо-продавца, позицию «Деталь» за миллион и карточки или
+ * заказы, которые заводили «для проверки» («тест», «asdf», «123»…). Повторный запуск безопасен.
+ */
+async function removeJunk(sellerId: string) {
+  // Демо-сделки по «Детали» пересоздадутся ниже уже по подшипнику.
+  await db().deal.deleteMany({ where: { sellerId, title: "Деталь" } });
+  await db().orderBoost.updateMany({
+    where: { comment: { contains: "Анкоридж" } },
+    data: { comment: "Нужны такие же для собственного парка техники, доставка в Воронеж." },
+  });
+  await db().order.updateMany({
+    where: { contactEmail: "sales@obnal.example" },
+    data: { contactEmail: "sales@metallagro.example" },
+  });
+
+  const products = await db().product.findMany({ select: { id: true, name: true } });
+  const junkProducts = products.filter((p) => p.name.trim() === "Деталь" || isJunkText(p.name));
+  if (junkProducts.length) {
+    await db().product.deleteMany({ where: { id: { in: junkProducts.map((p) => p.id) } } });
+    console.log(`Удалены тестовые позиции: ${junkProducts.map((p) => `«${p.name}»`).join(", ")}`);
+  }
+  const orders = await db().order.findMany({
+    select: { id: true, title: true, description: true },
+  });
+  const junkOrders = orders.filter((o) => isJunkText(o.title) || isJunkText(o.description));
+  if (junkOrders.length) {
+    await db().order.deleteMany({ where: { id: { in: junkOrders.map((o) => o.id) } } });
+    console.log(`Удалены тестовые заказы: ${junkOrders.map((o) => `«${o.title}»`).join(", ")}`);
   }
 }
 
@@ -455,6 +566,79 @@ async function seedAnalytics(sellerId: string, seller2Id: string, buyerId: strin
   }
 }
 
+/**
+ * Поисковые запросы по расширенному ассортименту (плуги, гидравлика, ферменты…), чтобы
+ * «Аналитика» и популярные запросы отражали весь каталог. Один раз: по запросу «плуг оборотный».
+ */
+async function seedCatalogQueries(buyerIds: string[]) {
+  const marker = "плуг оборотный";
+  if ((await db().searchQuery.count({ where: { normalized: marker } })) > 0) return;
+  let seed = 7;
+  const random = () => {
+    seed = (seed * 1_103_515_245 + 12_345) % 2 ** 31;
+    return seed / 2 ** 31;
+  };
+  const published = await db().product.findMany({
+    where: { status: "PUBLISHED" },
+    select: { id: true, name: true },
+  });
+  const pick = (word: string) =>
+    published.filter((p) => p.name.toLowerCase().includes(word)).slice(0, 9);
+  const queries: [string, { id: string }[]][] = [
+    [marker, pick("плуг оборотный")],
+    ["плуг lemken аналог", pick("плуг")],
+    ["лемех плуга", pick("лемех")],
+    ["отвал плуга", pick("отвал")],
+    ["диск бороны", pick("диск")],
+    ["гидроцилиндр навески", pick("гидроцилиндр")],
+    ["насос НШ-32", pick("насос")],
+    ["рвд 2sn", pick("рукав")],
+    ["подшипник 22212", pick("подшипник")],
+    ["манжета 50х72", pick("манжета")],
+    ["ремень вариаторный", pick("ремень")],
+    ["вал шлицевой", pick("вал")],
+    ["закваска для сыра", pick("закваска")],
+    ["лактаза", pick("лактаза")],
+    ["дрожжи сухие", pick("дрожжи")],
+    ["фильтр масляный", pick("фильтр")],
+    ["форсунка common rail", pick("форсунка")],
+    ["датчик скорости вращения", pick("датчик")],
+    ["частотный преобразователь", pick("преобразователь")],
+    ["культиватор лапа", pick("лапа")],
+    ["сеялка высевающий диск", pick("высевающий")],
+    ["пищевой насос", pick("насос")],
+  ];
+  const day = 86_400_000;
+  for (let daysAgo = 29; daysAgo >= 0; daysAgo--) {
+    const count = 4 + Math.floor(random() * 8);
+    for (let i = 0; i < count; i++) {
+      const [query, found] = queries[Math.floor(random() * queries.length)]!;
+      const createdAt = new Date(Date.now() - daysAgo * day - Math.floor(random() * day));
+      const viewer = random() < 0.6 ? buyerIds[Math.floor(random() * buyerIds.length)]! : null;
+      const search = await db().searchQuery.create({
+        data: {
+          query,
+          normalized: query
+            .toLowerCase()
+            .replace(/[^\p{L}\p{N}]+/gu, " ")
+            .trim(),
+          resultsCount: found.length,
+          viewerOrganizationId: viewer,
+          createdAt,
+        },
+      });
+      await db().productEvent.createMany({
+        data: found.flatMap((p) => [
+          { productId: p.id, kind: "IMPRESSION" as const, searchQueryId: search.id, createdAt },
+          ...(viewer && random() < 0.35
+            ? [{ productId: p.id, kind: "VIEW" as const, viewerOrganizationId: viewer, createdAt }]
+            : []),
+        ]),
+      });
+    }
+  }
+}
+
 /** Заказы на рынке и звёзды: чтобы в режиме «Продавцам» было что открыть. Один раз. */
 async function seedMarket(sellerId: string, buyerId: string) {
   if ((await db().order.count()) > 0) return;
@@ -494,7 +678,7 @@ async function seedMarket(sellerId: string, buyerId: string) {
   await boostOrder(sellerId, sellerUser, bearing.id, {
     stars: 3,
     quantity: 120,
-    comment: "Нужны такие же для собственного парка техники, доставка в Анкоридж.",
+    comment: "Нужны такие же для собственного парка техники, доставка в Воронеж.",
   });
   await createOrder(
     buyerId,
@@ -521,7 +705,7 @@ async function seedMarket(sellerId: string, buyerId: string) {
       budget: "350000",
       stars: "2",
       contactName: "Демо-продавец",
-      contactEmail: "sales@obnal.example",
+      contactEmail: "sales@metallagro.example",
     },
     [],
   );

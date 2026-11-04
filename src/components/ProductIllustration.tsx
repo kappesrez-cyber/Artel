@@ -18,9 +18,11 @@ export type PartKind =
   | "blade"
   | "gear"
   | "ingredient"
+  | "plow"
   | "part";
 
 const rules: [PartKind, RegExp][] = [
+  ["plow", /плуг|лемех/],
   ["bearing", /подшипник|bearing/],
   ["seal", /манжет|уплотн|сальник|кольц/],
   ["belt", /ремен|ремн/],
@@ -56,6 +58,7 @@ export const partKindLabels: Record<PartKind, string> = {
   blade: "Режущие элементы",
   gear: "Шестерни и звёздочки",
   ingredient: "Ингредиенты",
+  plow: "Плуги и почвообработка",
   part: "Детали и узлы",
 };
 
@@ -89,6 +92,26 @@ function gearPath(cx: number, cy: number, teeth: number, outer: number, inner: n
 }
 
 const drawings: Record<PartKind, ReactNode> = {
+  plow: (
+    <>
+      <path d="M18 30 L142 30" {...stroke} strokeWidth={7} />
+      {[40, 80, 120].map((x) => (
+        <g key={x}>
+          <path d={`M${x} 30 L${x - 6} 62`} {...stroke} strokeWidth={4} />
+          <path
+            d={`M${x - 18} 70 C ${x - 6} 66 ${x + 6} 56 ${x + 12} 42 L ${x + 16} 48 C ${x + 10} 64 ${x - 2} 76 ${x - 18} 78 Z`}
+            fill={FILL}
+            {...stroke}
+          />
+          <path
+            d={`M${x - 20} 78 L${x - 2} 77 L${x + 6} 84 L${x - 20} 85 Z`}
+            fill={PAPER}
+            {...stroke}
+          />
+        </g>
+      ))}
+    </>
+  ),
   bearing: (
     <>
       <circle cx="80" cy="50" r="38" fill={FILL} {...stroke} />

@@ -104,7 +104,7 @@ const marketOrder: Record<MarketSort, Prisma.OrderOrderByWithRelationInput[]> = 
 export async function listMarketOrders({
   query = "",
   sort = "stars",
-  limit = 60,
+  limit = 100,
 }: { query?: string; sort?: MarketSort; limit?: number } = {}): Promise<OrderCardView[]> {
   // «...» или «для» — не пустой запрос: показывать все заказы на него не нужно.
   if (queryScope(query) === "none") return [];

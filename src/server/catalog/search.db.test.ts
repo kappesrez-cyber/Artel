@@ -2,7 +2,7 @@
 // `npm run db:deploy`); без DATABASE_URL тест пропускается. Запуск: `npm run test:db`.
 import "dotenv/config";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { obnalProducts, techmashProducts } from "../../../prisma/demo-catalog";
+import { demoSellerProducts, techmashProducts } from "../../../prisma/demo-catalog";
 
 const enabled = Boolean(process.env.DATABASE_URL) && process.env.SEARCH_DB_TEST !== "0";
 
@@ -18,13 +18,13 @@ describe.skipIf(!enabled)("поиск по каталогу (PostgreSQL)", async
 
   beforeAll(async () => {
     const [a, b] = await Promise.all(
-      [`ООО Обнал ${tag}`, `ООО Техмаш ${tag}`].map((name) =>
+      [`ООО МеталлАгро ${tag}`, `ООО Техмаш ${tag}`].map((name) =>
         db().organization.create({ data: { name, city: "Тест" }, select: { id: true } }),
       ),
     );
     orgIds = [a!.id, b!.id];
     for (const [orgId, list] of [
-      [a!.id, obnalProducts],
+      [a!.id, demoSellerProducts],
       [b!.id, techmashProducts],
     ] as const) {
       for (const product of list) {
@@ -75,7 +75,7 @@ describe.skipIf(!enabled)("поиск по каталогу (PostgreSQL)", async
     ["gjlibgybr", bearing],
     ["подшип", bearing],
     // Город и производитель.
-    ["вал анкоридж", "Вал приводной жатки"],
+    ["вал воронеж", "Вал приводной жатки"],
   ])("«%s» → %s первым", async (query, expected) => {
     const { names, mode } = await search(query);
     expect(names[0]).toBe(expected);
@@ -117,7 +117,7 @@ describe.skipIf(!enabled)("поиск по каталогу (PostgreSQL)", async
   });
 
   it("на точный артикул, которого нет, показывает похожие и честно говорит об этом", async () => {
-    const { names, mode } = await search("подшипник 6206-2RS");
+    const { names, mode } = await search("подшипник 6209-2RS");
     expect(mode).toBe("partial");
     expect(names[0]).toBe(bearing);
   });
@@ -125,8 +125,8 @@ describe.skipIf(!enabled)("поиск по каталогу (PostgreSQL)", async
   it("при равной релевантности выше продавец с хорошей репутацией", async () => {
     const [a, b] = orgIds;
     // У второго предприятия есть успешная сделка с отзывом 5★, у первого нет.
-    const twinA = await createProduct(a!, { ...obnalProducts[3]!, name: `Звёздочка ${tag}` });
-    const twinB = await createProduct(b!, { ...obnalProducts[3]!, name: `Звёздочка ${tag}` });
+    const twinA = await createProduct(a!, { ...demoSellerProducts[2]!, name: `Звёздочка ${tag}` });
+    const twinB = await createProduct(b!, { ...demoSellerProducts[2]!, name: `Звёздочка ${tag}` });
     const deal = await db().deal.create({
       data: { sellerId: b!, buyerId: a!, title: "тест", status: "COMPLETED" },
     });
@@ -145,8 +145,8 @@ describe.skipIf(!enabled)("поиск по каталогу (PostgreSQL)", async
 
   it("при равной релевантности выше продавец с тарифом, истёкший тариф не помогает", async () => {
     const [a, b] = orgIds;
-    const twinA = await createProduct(a!, { ...obnalProducts[3]!, name: `Шкив ${tag}` });
-    const twinB = await createProduct(b!, { ...obnalProducts[3]!, name: `Шкив ${tag}` });
+    const twinA = await createProduct(a!, { ...demoSellerProducts[2]!, name: `Шкив ${tag}` });
+    const twinB = await createProduct(b!, { ...demoSellerProducts[2]!, name: `Шкив ${tag}` });
     const rank = async () => {
       const { ids: found } = await rankProducts(`шкив ${tag}`, 10);
       return [found.indexOf(twinA.id), found.indexOf(twinB.id)];
