@@ -96,15 +96,15 @@ describe("артикулы", () => {
       name: "Подшипник 6205-2RS",
       article: "ПШ-6205-2RS",
       analogs: "SKF 6205-2RSH",
-      city: "Анкоридж",
-      organizationName: "ООО «Обнал»",
+      city: "Воронеж",
+      organizationName: "ООО «МеталлАгро»",
     });
     expect(text.split(" ")).toEqual(
       expect.arrayContaining([
         "подшипник",
         "skf",
-        "анкоридж",
-        "обнал",
+        "воронеж",
+        "металлагро",
         "62052rs",
         "пш62052rs",
         "62052rsh",

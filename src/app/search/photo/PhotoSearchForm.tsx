@@ -30,6 +30,15 @@ const examples = [
       ["filter-4-label.jpg", "marking"],
     ],
   },
+  {
+    name: "Плуг для трактора",
+    files: [
+      ["plow-1-front.jpg", "front"],
+      ["plow-2-side.jpg", "side"],
+      ["plow-3-angle.jpg", "angle"],
+      ["plow-4-marking.jpg", "marking"],
+    ],
+  },
 ] as const;
 
 const demoDir = "/demo/photo-search/";

@@ -98,4 +98,46 @@ export const profiles: Profile[] = [
       },
     ],
   },
+  {
+    id: "plow-reversible-4",
+    title: "Плуг навесной оборотный, 4 корпуса",
+    original: "Lemken EurOpal 7 4N100",
+    category: "Почвообработка, плуги",
+    query: "плуг оборотный",
+    attributes: [
+      ["Тип", "Навесной оборотный, переворот гидроцилиндром"],
+      ["Корпусов", "4, ширина захвата корпуса ≈ 40 см"],
+      ["Рама", "Сплошная, квадрат ≈ 120 × 120 мм"],
+      ["Трактор", "140–180 л.с., навеска кат. III"],
+      ["Отечественный аналог", "ПНО-4-40 и аналоги"],
+    ],
+    // Снимки: `public/demo/photo-search/plow-*.jpg`. После замены на свои фото пересчитайте
+    // отпечатки: `node scripts/photo-search-fingerprints.mjs`.
+    references: [
+      {
+        file: "plow-1-front.jpg",
+        angle: "front",
+        fingerprint: "0008080c162a0000",
+        note: "Спереди: навесное устройство и механизм оборота, два ряда корпусов",
+      },
+      {
+        file: "plow-2-side.jpg",
+        angle: "side",
+        fingerprint: "00000040612c0600",
+        note: "Сбоку: 4 корпуса на сплошной раме, опорное колесо",
+      },
+      {
+        file: "plow-3-angle.jpg",
+        angle: "angle",
+        fingerprint: "000060702c230400",
+        note: "Под углом: полувинтовые отвалы, лемеха и стойки с защитой",
+      },
+      {
+        file: "plow-4-marking.jpg",
+        angle: "marking",
+        fingerprint: "ffffe5d9c1c1ffff",
+        note: "Прочитан шильдик: оборотный плуг, 4 корпуса × 40 см",
+      },
+    ],
+  },
 ];

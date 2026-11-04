@@ -15,7 +15,7 @@ datasource db {
 /// Сотрудники получают доступ через членство (`Membership`).
 model Organization {
   id              String                 @id @default(cuid())
-  /// Название, как его видит контрагент: «ООО Обнал».
+  /// Название, как его видит контрагент: «ООО «МеталлАгро»».
   name            String
   /// ИНН (10 цифр у юрлица, 12 у ИП).
   inn             String?                @unique
