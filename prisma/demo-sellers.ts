@@ -1320,8 +1320,6 @@ export const demoSellers: DemoSeller[] = [
   },
 ];
 
-const day = 86_400_000;
-
 /** Отчётность за каждый год с `from` по 2025: сдаётся в марте следующего года. */
 const financials = (from: number) =>
   Array.from({ length: Math.max(0, 2026 - Math.max(from, 2019)) }, (_, i) => ({
