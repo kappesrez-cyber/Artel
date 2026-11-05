@@ -36,7 +36,8 @@ const examples = [
       ["plow-1-front.jpg", "front"],
       ["plow-2-side.jpg", "side"],
       ["plow-3-angle.jpg", "angle"],
-      ["plow-4-marking.jpg", "marking"],
+      ["plow-4-top.jpg", "top"],
+      ["plow-5-marking.jpg", "marking"],
     ],
   },
 ] as const;
